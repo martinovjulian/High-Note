@@ -157,3 +157,42 @@ async def analyze_concepts_enhanced(
         "extra_concepts": extra_concepts,
         "common_concepts": common_concepts
     }
+# --- New Endpoint: Calculate Weight Percentage for Class Concepts ---
+@router.get("/class-concepts-weight")
+async def calculate_class_concept_weights(
+    class_id: str,
+    num_concepts: Optional[int] = 10,
+    similarity_threshold: Optional[float] = 0.75,
+    similarity_method: Optional[str] = "string",
+    db_client: AsyncIOMotorClient = Depends(get_database_client)
+):
+    db = db_client.notes_db
+    # Retrieve all notes for the given class
+    notes_docs = await db.notes.find({"class_id": class_id}).to_list(length=None)
+    if not notes_docs:
+        raise HTTPException(status_code=404, detail="No notes found for this class.")
+    
+    total_notes = len(notes_docs)
+    concept_frequency = {}
+    
+    # Process each note individually to extract its key concepts
+    for doc in notes_docs:
+        if "content" in doc:
+            # Extract concepts from the note's content using RAKE; adjust parameters as needed
+            concepts = extract_key_concepts(doc["content"], num_concepts, similarity_threshold, similarity_method)
+            # Ensure each concept is counted only once per note
+            unique_concepts = set(concepts)
+            for concept in unique_concepts:
+                concept_frequency[concept] = concept_frequency.get(concept, 0) + 1
+    
+    # Compute weight percentage for each concept
+    concept_weights = {}
+    for concept, freq in concept_frequency.items():
+        weight_percent = (freq / total_notes) * 100
+        concept_weights[concept] = round(weight_percent, 2)
+    
+    return {
+        "class_id": class_id,
+        "total_notes": total_notes,
+        "concept_weights": concept_weights
+    }
