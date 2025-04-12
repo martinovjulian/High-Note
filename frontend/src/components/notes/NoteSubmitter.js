@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 const API_BASE_URL = 'http://localhost:8000';
 
 function NoteSubmitter({ lobbyId }) {
-  const [userId, setUserId] = useState('');
+  const { username, token } = useAuth(); // Get the authentication token
   const [content, setContent] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -20,21 +21,25 @@ function NoteSubmitter({ lobbyId }) {
     setMessage('');
 
     const requestBody = {
-      user_id: userId,
+      user_id: username,
       class_id: lobbyId,
       content: content,
     };
 
-    if (!userId || !lobbyId || !content) {
+    if (!username || !lobbyId || !content) {
       setError('Please fill in all fields.');
       setIsLoading(false);
       return;
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/submit-note`, {
+      // Include Authorization header with the token
+      const response = await fetch(`${API_BASE_URL}/notes/submit-note`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // Add authentication token
+        },
         body: JSON.stringify(requestBody),
       });
 
@@ -71,9 +76,13 @@ function NoteSubmitter({ lobbyId }) {
       setContent('');
       setNoteSubmitted(true);
 
-      const incrementResponse = await fetch(`${API_BASE_URL}/lobbies/${lobbyId}/increment-user-count`, {
+      // Also include the Authorization header in this request
+      const incrementResponse = await fetch(`${API_BASE_URL}/lobby/lobbies/${lobbyId}/increment-user-count`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // Add authentication token
+        },
       });
 
       if (!incrementResponse.ok) {
@@ -102,11 +111,9 @@ function NoteSubmitter({ lobbyId }) {
           <input
             id="userId"
             type="text"
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-            disabled={isLoading}
-            required
-            className="w-full px-4 py-2 rounded-lg bg-white/20 border border-white/30 focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-white/70"
+            value={username}
+            readOnly
+            className="w-full px-4 py-2 rounded-lg bg-gray-600/30 text-white/80 border border-white/30 cursor-not-allowed"
           />
         </div>
 
@@ -161,7 +168,7 @@ function NoteSubmitter({ lobbyId }) {
 
       {noteSubmitted && (
         <button
-        onClick={() => navigate(`/analysis?classId=${lobbyId}&userId=${userId}`)}
+          onClick={() => navigate(`/analysis?classId=${lobbyId}&userId=${username}`)}
           className="w-full py-3 font-bold rounded-lg text-white mt-4 transition duration-300 bg-gradient-to-r from-purple-500 to-indigo-600 hover:scale-105 hover:shadow-lg hover:shadow-indigo-500/40"
         >
           Analyze

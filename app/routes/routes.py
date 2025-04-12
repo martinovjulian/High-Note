@@ -22,18 +22,19 @@ async def submit_note(
     payload: NotePayload,
     db_client: AsyncIOMotorClient = Depends(get_database_client)
 ):
-    db = db_client.notes_db
-    # Include the submitted field set to True to denote final submission
-    note_data = {
-        "user_id": payload.user_id,
-        "content": payload.content,
-        "class_id": payload.class_id,
-        "submitted": True  # New field to indicate the note has been submitted
-    }
-    result = await db.notes.insert_one(note_data)
-    if not result.inserted_id:
-        raise HTTPException(status_code=500, detail="Failed to submit note")
-    return {"message": "Note submitted successfully", "id": str(result.inserted_id)}
+    # Use the context manager properly
+    async with get_database_client() as client:
+        db = client.notes_db
+        note_data = {
+            "user_id": payload.user_id,
+            "content": payload.content,
+            "class_id": payload.class_id
+        }
+
+        result = await db.notes.insert_one(note_data)
+        if not result.inserted_id:
+            raise HTTPException(status_code=500, detail="Failed to submit note")
+        return {"message": "Note submitted successfully", "id": str(result.inserted_id)}
 # ... (rest of your routes remain the same) ...
 
 
@@ -153,6 +154,7 @@ async def analyze_concepts_enhanced(
         "extra_concepts": extra_concepts,
         "common_concepts": common_concepts
     }
+
 
 # --- New Endpoint: Calculate Weight Percentage for Class Concepts ---
 @router.get("/class-concepts-weight")
