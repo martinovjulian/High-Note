@@ -1,14 +1,15 @@
-// src/App.js
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import CreateLobby from './components/System/CreateLobby.js';
 import Lobby from './components/System/Lobby.js';
+import AnalysisPage from './components/AnalysisPage.js';
 
 function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
   const isLobbyPage = location.pathname.startsWith('/lobby');
+  const isAnalysisPage = location.pathname.startsWith('/analysis'); // ✅ use /analysis not /analyze
   const [lobbies, setLobbies] = useState([]);
   
   // State for password modal
@@ -33,7 +34,6 @@ function AppContent() {
         password: password, // Pass the entered password
       })
       .then(() => {
-        // Refresh lobbies from DB to get the correct user_count
         axios
           .get('http://localhost:8000/lobbies')
           .then((response) => setLobbies(response.data))
@@ -76,8 +76,8 @@ function AppContent() {
   };
 
   return (
-    <div className={`${isLobbyPage ? '' : 'min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white'}`}>
-      {!isLobbyPage && (
+    <div className={`${isLobbyPage || isAnalysisPage ? '' : 'min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white'}`}>
+      {!isLobbyPage && !isAnalysisPage && (
         <div className="py-12 px-6 max-w-6xl mx-auto">
           <CreateLobby onCreateLobby={addLobby} />
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mt-12">
@@ -157,6 +157,7 @@ function AppContent() {
 
       <Routes>
         <Route path="/lobby/:lobbyId" element={<Lobby />} />
+        <Route path="/analysis" element={<AnalysisPage />} /> {/* ✅ matches updated path */}
       </Routes>
     </div>
   );
