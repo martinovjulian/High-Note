@@ -34,6 +34,14 @@ module.exports = {
       boxShadow: {
         glow: '0 0 10px rgba(255, 255, 255, 0.2)',
       },
+      theme: {
+        extend: {
+          animation: {
+            bounce: 'bounce 1.5s infinite',
+          },
+        },
+      }
+      
     },
   },
   plugins: [],

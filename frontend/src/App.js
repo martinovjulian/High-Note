@@ -1,13 +1,14 @@
-// src/App.js
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import CreateLobby from './components/System/CreateLobby.js';
 import Lobby from './components/System/Lobby.js';
+import AnalysisPage from './components/AnalysisPage.js';
 
 function AppContent() {
   const location = useLocation();
   const isLobbyPage = location.pathname.startsWith('/lobby');
+  const isAnalysisPage = location.pathname.startsWith('/analysis'); // ✅ use /analysis not /analyze
   const [lobbies, setLobbies] = useState([]);
 
   useEffect(() => {
@@ -25,7 +26,6 @@ function AppContent() {
         user_count: 0,
       })
       .then(() => {
-        // Refresh lobbies from DB to get the correct user_count
         axios
           .get('http://localhost:8000/lobbies')
           .then((response) => setLobbies(response.data))
@@ -33,11 +33,10 @@ function AppContent() {
       })
       .catch((error) => console.error('Error creating lobby:', error));
   };
-  
 
   return (
-    <div className={`${isLobbyPage ? '' : 'min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white'}`}>
-      {!isLobbyPage && (
+    <div className={`${isLobbyPage || isAnalysisPage ? '' : 'min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white'}`}>
+      {!isLobbyPage && !isAnalysisPage && (
         <div className="py-12 px-6 max-w-6xl mx-auto">
           <CreateLobby onCreateLobby={addLobby} />
 
@@ -58,9 +57,7 @@ function AppContent() {
                   to={`/lobby/${lobby.lobby_id}`}
                   className="relative group transform transition duration-500 hover:scale-[1.03] animate-float"
                 >
-                  <div
-                    className={`bg-gradient-to-br ${gradient} rounded-2xl p-6 shadow-2xl backdrop-blur-md bg-opacity-80 border border-white/20 transition-all duration-300`}
-                  >
+                  <div className={`bg-gradient-to-br ${gradient} rounded-2xl p-6 shadow-2xl backdrop-blur-md bg-opacity-80 border border-white/20`}>
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="text-2xl font-bold tracking-wide">{lobby.lobby_name}</h3>
                       <span className="inline-flex items-center px-2 py-1 text-sm font-semibold bg-green-500 text-white rounded-full animate-pulse shadow">
@@ -73,11 +70,9 @@ function AppContent() {
                     </p>
 
                     <div className="flex items-center gap-2 text-sm font-medium text-white/90">
-  <span className="text-lg">👥</span>
-  <span>{lobby.user_count || 0} Active Users</span>
-</div>
-
-
+                      <span className="text-lg">👥</span>
+                      <span>{lobby.user_count || 0} Active Users</span>
+                    </div>
                   </div>
                 </Link>
               );
@@ -85,8 +80,11 @@ function AppContent() {
           </div>
         </div>
       )}
+
+      {/* ✅ App routes */}
       <Routes>
         <Route path="/lobby/:lobbyId" element={<Lobby />} />
+        <Route path="/analysis" element={<AnalysisPage />} /> {/* ✅ matches updated path */}
       </Routes>
     </div>
   );

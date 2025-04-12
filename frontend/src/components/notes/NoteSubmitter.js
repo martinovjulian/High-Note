@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = 'http://localhost:8000';
 
@@ -8,6 +9,9 @@ function NoteSubmitter({ lobbyId }) {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [noteSubmitted, setNoteSubmitted] = useState(false);
+
+  const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -41,7 +45,6 @@ function NoteSubmitter({ lobbyId }) {
         console.error("Could not parse response JSON:", parseError);
         if (response.ok) {
           setMessage('Note submitted (but response format was unexpected).');
-          setUserId('');
           setContent('');
           return;
         }
@@ -54,7 +57,9 @@ function NoteSubmitter({ lobbyId }) {
           if (typeof result.detail === 'string') {
             errorDetail = result.detail;
           } else if (Array.isArray(result.detail)) {
-            errorDetail = result.detail.map(err => `${err.loc ? err.loc.join('.') : 'error'}: ${err.msg}`).join('; ');
+            errorDetail = result.detail
+              .map(err => `${err.loc ? err.loc.join('.') : 'error'}: ${err.msg}`)
+              .join('; ');
           } else {
             errorDetail = JSON.stringify(result.detail);
           }
@@ -63,8 +68,8 @@ function NoteSubmitter({ lobbyId }) {
       }
 
       setMessage(`✅ Note submitted! ID: ${result.id}`);
-      setUserId('');
       setContent('');
+      setNoteSubmitted(true);
 
       const incrementResponse = await fetch(`${API_BASE_URL}/lobbies/${lobbyId}/increment-user-count`, {
         method: 'PUT',
@@ -153,6 +158,15 @@ function NoteSubmitter({ lobbyId }) {
           {isLoading ? 'Submitting...' : '🚀 Submit Note'}
         </button>
       </form>
+
+      {noteSubmitted && (
+        <button
+        onClick={() => navigate(`/analysis?classId=${lobbyId}&userId=${userId}`)}
+          className="w-full py-3 font-bold rounded-lg text-white mt-4 transition duration-300 bg-gradient-to-r from-purple-500 to-indigo-600 hover:scale-105 hover:shadow-lg hover:shadow-indigo-500/40"
+        >
+          Analyze
+        </button>
+      )}
     </div>
   );
 }
