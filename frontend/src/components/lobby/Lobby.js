@@ -1,6 +1,7 @@
+// src/components/Lobby.js
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import NoteSubmitter from './NoteSubmitter';
+import NoteSubmitter from '../notes/NoteSubmitter';
 import axios from 'axios';
 import LobbyLayout from './LobbyLayout'; // ✅ Import it
 
@@ -10,6 +11,7 @@ function Lobby() {
 
   useEffect(() => {
     setLobbyDetails(null); // Clear old data while fetching
+    // Optionally fetch lobby details from the backend
     axios.get(`http://localhost:8000/lobbies/${lobbyId}`)
       .then(response => setLobbyDetails(response.data))
       .catch(error => console.error("Failed to fetch lobby details:", error));

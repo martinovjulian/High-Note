@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import './CreateLobby.css';
 
 function CreateLobby({ onCreateLobby }) {
   const [lobbyName, setLobbyName] = useState('');
@@ -26,7 +25,7 @@ function CreateLobby({ onCreateLobby }) {
       onCreateLobby(lobbyName, description);
       setLobbyName('');
       setDescription('');
-      setShowModal(false); // close modal on success
+      setShowModal(false);
     }
   };
 
@@ -47,6 +46,7 @@ function CreateLobby({ onCreateLobby }) {
                 placeholder="Lobby name"
                 value={lobbyName}
                 onChange={(e) => setLobbyName(e.target.value)}
+                required
               />
 
               <textarea

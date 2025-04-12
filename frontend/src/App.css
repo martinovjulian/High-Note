@@ -1,87 +1,24 @@
-/* App.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-.App {
-  text-align: center;
+/* Optional custom fonts or styles */
+body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f5f7fa;
-  min-height: 100vh;
-  padding: 20px;
 }
 
-.lobby-layout {
-  min-height: 100vh;
-  background-color: #ffffff;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 2rem;
+/* Optional: Global animations or overrides */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.lobby-content {
-  max-width: 800px;
-  width: 100%;
-}
-
-.lobby-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-}
-
-.lobby-link {
-  text-decoration: none;
-  color: #333;
-  font-weight: bold;
-}
-
-.create-lobby-form input {
-  padding: 8px;
-  width: 250px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  margin-right: 10px;
-}
-
-.create-lobby-form button {
-  padding: 8px 16px;
-  border-radius: 4px;
-  border: none;
-  background-color: #5b6bc0;
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.create-lobby-form button:hover {
-  background-color: #3f51b5;
-}
-.lobby-list {
-  display: flex;
-  gap: 20px;
-  overflow: hidden;
-  white-space: nowrap;
-  padding: 20px;
-}
-
-.lobby-card {
-  min-width: 200px;
-  background-color: #fff;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  padding: 15px;
-  border-radius: 8px;
-  text-align: center;
-}
-.lobby-card h3 {
-  margin: 0 0 10px 0;
-  font-size: 1.2rem;
-}
-
-.lobby-description {
-  font-size: 0.95rem;
-  margin-bottom: 8px;
-  color: #333;
-}
-
-.lobby-users {
-  font-size: 0.85rem;
-  color: #666;
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
 }
