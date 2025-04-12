@@ -8,7 +8,19 @@
   padding: 20px;
 }
 
+.lobby-layout {
+  min-height: 100vh;
+  background-color: #ffffff;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 2rem;
+}
 
+.lobby-content {
+  max-width: 800px;
+  width: 100%;
+}
 
 .lobby-card:hover {
   transform: translateY(-5px);
@@ -57,4 +69,19 @@
   padding: 15px;
   border-radius: 8px;
   text-align: center;
+}
+.lobby-card h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.2rem;
+}
+
+.lobby-description {
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.lobby-users {
+  font-size: 0.85rem;
+  color: #666;
 }
