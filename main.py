@@ -1,7 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes.routes import router as note_router
 from app.routes.lobby import router as lobby_router
+from app.routes.auth import router as auth_router, get_current_user
 
 app = FastAPI()
 
@@ -13,5 +14,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(note_router)
-app.include_router(lobby_router)
+# Include routers
+app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(note_router, prefix="/notes", tags=["notes"], dependencies=[Depends(get_current_user)])
+app.include_router(lobby_router, prefix="/lobby", tags=["lobby"], dependencies=[Depends(get_current_user)])

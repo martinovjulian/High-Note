@@ -3,44 +3,68 @@ import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from
 import axios from 'axios';
 import CreateLobby from './components/System/CreateLobby.js';
 import Lobby from './components/System/Lobby.js';
+import Login from './components/Auth/Login.js';
 import AnalysisPage from './components/AnalysisPage.js';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { token } = useAuth();
   const isLobbyPage = location.pathname.startsWith('/lobby');
-  const isAnalysisPage = location.pathname.startsWith('/analysis'); // ✅ use /analysis not /analyze
+  const isAnalysisPage = location.pathname.startsWith('/analysis');
   const [lobbies, setLobbies] = useState([]);
   
-  // State for password modal
+  // State for password modal from main branch
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [selectedLobby, setSelectedLobby] = useState(null);
   const [enteredPassword, setEnteredPassword] = useState('');
 
   useEffect(() => {
-    axios
-      .get('http://localhost:8000/lobbies')
-      .then((response) => setLobbies(response.data))
-      .catch((error) => console.error('Error fetching lobbies:', error));
-  }, []);
+    if (token) {
+      axios
+        .get('http://localhost:8000/lobby/lobbies', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        .then((response) => setLobbies(response.data))
+        .catch((error) => console.error('Error fetching lobbies:', error));
+    }
+  }, [token]);
 
-  // Updated addLobby to accept a password argument.
+  // Updated addLobby: combining user_count and password requirements
   const addLobby = (lobbyName, description, password) => {
     axios
-      .post('http://localhost:8000/create-lobby', {
-        lobby_name: lobbyName,
-        description: description,
-        user_count: 0,
-        password: password, // Pass the entered password
-      })
+      .post(
+        'http://localhost:8000/lobby/create-lobby',
+        {
+          lobby_name: lobbyName,
+          description: description,
+          user_count: 1, // assuming the creator joins the lobby immediately
+          password: password, // include the entered password
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
       .then(() => {
         axios
-          .get('http://localhost:8000/lobbies')
+          .get('http://localhost:8000/lobby/lobbies', {
+            headers: { Authorization: `Bearer ${token}` }
+          })
           .then((response) => setLobbies(response.data))
           .catch((error) => console.error('Error re-fetching lobbies:', error));
       })
       .catch((error) => console.error('Error creating lobby:', error));
   };
+
+  // If the user is not authenticated, show the Login screen
+  if (!token) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900">
+        <Login />
+      </div>
+    );
+  }
 
   // Handle click on a lobby card to join it.
   const handleLobbyClick = async (lobby) => {
@@ -122,7 +146,6 @@ function AppContent() {
       {showPasswordModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-80 relative">
-            {/* Small X button in top left corner, larger and red */}
             <button
               onClick={() => {
                 setShowPasswordModal(false);
@@ -157,7 +180,7 @@ function AppContent() {
 
       <Routes>
         <Route path="/lobby/:lobbyId" element={<Lobby />} />
-        <Route path="/analysis" element={<AnalysisPage />} /> {/* ✅ matches updated path */}
+        <Route path="/analysis" element={<AnalysisPage />} />
       </Routes>
     </div>
   );
@@ -165,9 +188,11 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <AuthProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </AuthProvider>
   );
 }
 

@@ -6,20 +6,23 @@ from typing import Optional
 from app.db import get_database_client
 
 from bson.objectid import ObjectId
+from app.routes.auth import get_current_user
+from app.routes.auth import User
 
 
 router = APIRouter()
 
 class LobbyPayload(BaseModel):
     lobby_name: str
-    created_by: Optional[str] = None  # save for later for user_auth
     description: Optional[str] = None
-    user_count: int
-    password: Optional[str] = None  # <-- ADDED: Allows storing an optional password
+    user_count: int = 1  # Default to 1 for the creator
+    password: Optional[str] = None  # Allow an optional password
+    created_by: Optional[str] = None  # For compatibility; will use current_user in endpoint
 
 @router.post("/create-lobby")
 async def create_lobby(
     payload: LobbyPayload,
+    current_user: User = Depends(get_current_user),
     db_client: AsyncIOMotorClient = Depends(get_database_client)
 ):
     # Enforce a max word count for description (e.g., 50 words)
@@ -34,11 +37,11 @@ async def create_lobby(
     db = db_client.notes_db
     lobby_data = {
         "lobby_name": payload.lobby_name,
-        "created_by": payload.created_by,
+        "created_by": current_user.username,  # Use authenticated user's username
         "description": payload.description,
         "user_count": payload.user_count,
         "created_at": datetime.utcnow(),
-        "password": payload.password  # <-- ADDED: Save the password
+        "password": payload.password  # Save the password if provided
     }
     result = await db.lobbies.insert_one(lobby_data)
     if not result.inserted_id:
@@ -87,6 +90,7 @@ async def delete_lobby(
 
 @router.get("/lobbies")
 async def get_all_lobbies(
+    current_user: User = Depends(get_current_user),
     db_client: AsyncIOMotorClient = Depends(get_database_client)
 ):
     db = db_client.notes_db
@@ -97,7 +101,9 @@ async def get_all_lobbies(
             "lobby_id": str(lobby["_id"]),
             "lobby_name": lobby.get("lobby_name", ""),
             "description": lobby.get("description", ""),
-            "user_count": lobby.get("user_count", 0)  # now included
+            "user_count": lobby.get("user_count", 0),
+            "created_by": lobby.get("created_by", ""),
+            "created_at": lobby.get("created_at", "")
         }
         for lobby in lobbies
     ]
