@@ -1,41 +1,27 @@
 // src/components/NoteSubmitter.js
 import React, { useState } from 'react';
 
-// Define the base URL of your FastAPI backend
 const API_BASE_URL = 'http://localhost:8000';
 
 function NoteSubmitter({ lobbyId }) {
-  // State variables for user input (userId and note content)
   const [userId, setUserId] = useState('');
   const [content, setContent] = useState('');
 
-  // States for feedback and loading
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Handle form submission
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsLoading(true);
     setError('');
     setMessage('');
 
-    // Prepare the request body – note that class_id (lobbyId) is set automatically
     const requestBody = {
       user_id: userId,
       class_id: lobbyId,
       content: content,
     };
-
-    console.log('--- DEBUG: Submitting Data ---');
-    console.log('Request Body Object:', requestBody);
-    console.log('Data Types:', {
-      userId: typeof userId,
-      lobbyId: typeof lobbyId,
-      content: typeof content
-    });
-    console.log('-----------------------------');
 
     // Basic validation
     if (!userId || !lobbyId || !content) {
@@ -47,13 +33,10 @@ function NoteSubmitter({ lobbyId }) {
     try {
       const response = await fetch(`${API_BASE_URL}/submit-note`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
       });
 
-      // Try parsing the response regardless of status
       let result = {};
       try {
         result = await response.json();
@@ -83,11 +66,21 @@ function NoteSubmitter({ lobbyId }) {
         throw new Error(errorDetail);
       }
 
-      // Success: clear user-input fields; lobbyId remains unchanged
       setMessage(`Note submitted successfully! ID: ${result.id}`);
       setUserId('');
       setContent('');
 
+      // Optional: increment user count in lobby
+      const incrementResponse = await fetch(`${API_BASE_URL}/lobbies/${lobbyId}/increment-user-count`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!incrementResponse.ok) {
+        const incrementError = await incrementResponse.json();
+        console.error('Increment user count failed:', incrementError);
+        setError('Note submitted, but failed to increment lobby count.');
+      }
     } catch (err) {
       console.error("Submission failed:", err);
       setError(err.message || 'Failed to submit note. Check console for details.');
@@ -103,7 +96,6 @@ function NoteSubmitter({ lobbyId }) {
         Fill in the details and click submit. Check the browser's developer console (F12) for debugging logs.
       </p>
       <form onSubmit={handleSubmit} style={styles.form}>
-        {/* User ID Field */}
         <div style={styles.formGroup}>
           <label htmlFor="userId" style={styles.label}>User ID:</label>
           <input
@@ -117,7 +109,6 @@ function NoteSubmitter({ lobbyId }) {
           />
         </div>
 
-        {/* Auto-populated, non-editable Lobby ID Field */}
         <div style={styles.formGroup}>
           <label htmlFor="classId" style={styles.label}>Lobby ID:</label>
           <input
@@ -129,7 +120,6 @@ function NoteSubmitter({ lobbyId }) {
           />
         </div>
 
-        {/* Note Content Field */}
         <div style={styles.formGroup}>
           <label htmlFor="content" style={styles.label}>Note Content:</label>
           <textarea
@@ -143,15 +133,10 @@ function NoteSubmitter({ lobbyId }) {
           />
         </div>
 
-        {/* Display Messages */}
         {message && <p style={styles.successMessage}>{message}</p>}
         {error && <p style={{ ...styles.errorMessage, fontWeight: 'bold' }}>{error}</p>}
 
-        <button
-          type="submit"
-          style={styles.button}
-          disabled={isLoading}
-        >
+        <button type="submit" style={styles.button} disabled={isLoading}>
           {isLoading ? 'Submitting...' : 'Submit Note'}
         </button>
       </form>
@@ -159,7 +144,6 @@ function NoteSubmitter({ lobbyId }) {
   );
 }
 
-// Inline styles (consider using a CSS module or your own styling method)
 const styles = {
   container: {
     maxWidth: '500px',
