@@ -1,5 +1,6 @@
+// src/components/System/Lobby.js
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom'; // Added useNavigate import
 import NoteSubmitter from '../notes/NoteSubmitter';
 import axios from 'axios';
 import LobbyLayout from './LobbyLayout';
@@ -7,6 +8,9 @@ import LobbyLayout from './LobbyLayout';
 function Lobby() {
   const { lobbyId } = useParams();
   const [lobbyDetails, setLobbyDetails] = useState(null);
+  const [password, setPassword] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const navigate = useNavigate(); // Added useNavigate if not already present
 
   useEffect(() => {
     setLobbyDetails(null);
@@ -14,6 +18,14 @@ function Lobby() {
       .then(response => setLobbyDetails(response.data))
       .catch(error => console.error("Failed to fetch lobby details:", error));
   }, [lobbyId]);
+
+  const handleDelete = () => {
+    axios.delete(`http://localhost:8000/lobbies/${lobbyId}`, {
+      data: { password }
+    })
+    .then(() => navigate('/'))
+    .catch(err => setDeleteError(err.response?.data?.detail || 'Deletion failed'));
+  };
 
   return (
     <LobbyLayout>
@@ -28,6 +40,24 @@ function Lobby() {
         </div>
 
         <NoteSubmitter lobbyId={lobbyId} />
+
+        {/* Existing deletion functionality remains here */}
+        <div className="mt-10">
+          <input
+            type="password"
+            placeholder="Enter password to delete lobby"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="px-4 py-2 rounded"
+          />
+          <button
+            onClick={handleDelete}
+            className="ml-2 bg-red-500 text-white px-4 py-2 rounded"
+          >
+            Delete Lobby
+          </button>
+          {deleteError && <div className="mt-2 text-red-400">{deleteError}</div>}
+        </div>
 
         <div className="text-center mt-12">
           <Link
