@@ -1,0 +1,91 @@
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import axios from 'axios';
+
+function AnalysisPage() {
+  const [searchParams] = useSearchParams();
+  const classId = searchParams.get('classId');
+  const userId = searchParams.get('userId');
+
+  const [notesContent, setNotesContent] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!userId || !classId) {
+      console.warn('Missing userId or classId from URL:', { userId, classId });
+      setLoading(false);
+      return;
+    }
+
+    const fetchNotes = async () => {
+      try {
+        const response = await axios.get('http://localhost:8000/get-student-notes', {
+          params: { user_id: userId, class_id: classId },
+        });
+        setNotesContent(response.data.notes);
+      } catch (error) {
+        console.error('Failed to fetch student notes:', error.response?.data || error.message);
+        setNotesContent([]);
+      }
+    };
+
+    // Always wait at least 5 seconds before stopping loading
+    fetchNotes();
+    const delay = setTimeout(() => setLoading(false), 5000);
+
+    return () => clearTimeout(delay);
+  }, [userId, classId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-800 via-purple-700 to-purple-600">
+        <div className="flex flex-col items-center bg-white p-8 rounded-2xl shadow-lg">
+          {/* Spinner */}
+          <div className="relative w-16 h-16 mb-6">
+            <div className="absolute inset-0 rounded-full border-4 border-green-600 border-t-transparent animate-spin" />
+            <div className="absolute inset-2 rounded-full bg-gradient-to-br from-green-400 to-emerald-600"></div>
+          </div>
+  
+          {/* Loading Text */}
+          <p className="text-lg font-medium text-black tracking-wide animate-pulse">
+            Analyzing your notes
+            <span className="animate-bounce inline-block">.</span>
+            <span className="animate-bounce inline-block delay-150">.</span>
+            <span className="animate-bounce inline-block delay-300">.</span>
+          </p>
+        </div>
+      </div>
+    );
+  }
+  
+
+  return (
+    <div className="min-h-screen bg-gradient-to-r from-purple-800 to-purple-600 text-white py-10 px-4 flex justify-center">
+      <div className="w-full max-w-5xl bg-white/10 p-8 rounded-2xl shadow-2xl">
+        <h1 className="text-4xl font-bold mb-6 text-white border-b border-purple-200 pb-2">
+          Your Submitted Notes
+        </h1>
+
+        {notesContent.length === 0 ? (
+          <p className="text-gray-300 italic">No notes found for this class and user.</p>
+        ) : (
+          notesContent.map((note, index) => (
+            <textarea
+              key={index}
+              value={note}
+              onChange={(e) => {
+                const updated = [...notesContent];
+                updated[index] = e.target.value;
+                setNotesContent(updated);
+              }}
+              className="w-full bg-white text-black p-4 rounded-xl mb-4 shadow-md resize-none whitespace-pre-wrap"
+              rows={10}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default AnalysisPage;
