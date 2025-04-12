@@ -1,3 +1,4 @@
+// src/components/System/CreateLobby.js
 import React, { useState } from 'react';
 
 function CreateLobby({ onCreateLobby }) {
@@ -5,6 +6,8 @@ function CreateLobby({ onCreateLobby }) {
   const [description, setDescription] = useState('');
   const [wordWarning, setWordWarning] = useState('');
   const [showModal, setShowModal] = useState(false);
+  // Added state for password
+  const [password, setPassword] = useState('');
 
   const handleDescriptionChange = (e) => {
     const input = e.target.value;
@@ -15,16 +18,16 @@ function CreateLobby({ onCreateLobby }) {
     } else {
       setWordWarning('');
     }
-
     setDescription(input);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (lobbyName.trim() && wordWarning === '') {
-      onCreateLobby(lobbyName, description);
+      onCreateLobby(lobbyName, description, password); // Passing the password too
       setLobbyName('');
       setDescription('');
+      setPassword(''); // Reset the password field
       setShowModal(false);
     }
   };
@@ -66,6 +69,16 @@ function CreateLobby({ onCreateLobby }) {
                 onChange={handleDescriptionChange}
                 className="w-full mb-2 p-3 border-2 border-purple-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-700 font-medium"
               />
+
+              {/* Added password field */}
+              <input
+                type="password"
+                placeholder="Lobby Password (optional)"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full mb-4 p-3 border-2 border-purple-300 rounded-lg"
+              />
+
               {wordWarning && (
                 <p className="text-red-500 text-sm mb-2">{wordWarning}</p>
               )}
