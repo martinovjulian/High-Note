@@ -1,7 +1,7 @@
 // App.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import NoteSubmitter from './components/NoteSubmitter';
+import axios from 'axios';
 import CreateLobby from './components/CreateLobby';
 import Lobby from './components/Lobby';
 import './App.css';
@@ -9,44 +9,36 @@ import './App.css';
 function App() {
   const [lobbies, setLobbies] = useState([]);
 
-  // Callback to add a new lobby to the list
+  useEffect(() => {
+    axios.get('http://localhost:8000/lobbies')
+      .then(response => setLobbies(response.data))
+      .catch(error => console.error('Error fetching lobbies:', error));
+  }, []);
+
   const addLobby = (lobbyName) => {
-    const newLobby = { id: Date.now(), name: lobbyName };
-    setLobbies([...lobbies, newLobby]);
+    axios.post('http://localhost:8000/create-lobby', { lobby_name: lobbyName })
+      .then(response => {
+        setLobbies([...lobbies, { lobby_id: response.data.lobby_id, lobby_name: lobbyName }]);
+      })
+      .catch(error => console.error('Error creating lobby:', error));
   };
 
   return (
     <Router>
       <div className="App">
-        <header className="App-header">
-          <h1>My Notes App</h1>
-          <nav>
-            <Link to="/">Home</Link>
-          </nav>
-        </header>
-        <main>
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <>
-                  {/* CreateLobby component provides the form for new lobbies */}
-                  <CreateLobby onCreateLobby={addLobby} />
-                  {/* List existing lobbies as clickable links */}
-                  <ul>
-                    {lobbies.map(lobby => (
-                      <li key={lobby.id}>
-                        <Link to={`/lobby/${lobby.id}`}>{lobby.name}</Link>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              }
-            />
-            {/* Dynamic lobby page, the lobby page receives the lobby id as a URL parameter */}
-            <Route path="/lobby/:lobbyId" element={<Lobby />} />
-          </Routes>
-        </main>
+        <CreateLobby onCreateLobby={addLobby} />
+        <div className="lobby-list">
+          {lobbies.map(lobby => (
+            <Link key={lobby.lobby_id} to={`/lobby/${lobby.lobby_id}`} className="lobby-link">
+              <div className="lobby-card">
+                {lobby.lobby_name}
+              </div>
+            </Link>
+          ))}
+        </div>
+        <Routes>
+          <Route path="/lobby/:lobbyId" element={<Lobby />} />
+        </Routes>
       </div>
     </Router>
   );
