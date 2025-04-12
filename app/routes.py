@@ -1,29 +1,44 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body # Body might not be needed here
+from pydantic import BaseModel # Import BaseModel
 from motor.motor_asyncio import AsyncIOMotorClient
 from typing import Optional
 from app.db import get_database_client
 from app.extract import extract_key_concepts
+# Assuming extract_key_concepts is defined elsewhere or remove if not used in this file
+# from app.extract import extract_key_concepts
 
 router = APIRouter()
+
+# --- Define a Pydantic model for the request body ---
+class NotePayload(BaseModel):
+    user_id: str
+    content: str
+    class_id: str
+# --- End Pydantic model definition ---
 
 # Route that only submits a note
 @router.post("/submit-note")
 async def submit_note(
-    user_id: str,
-    content: str,
-    class_id: str,
+    # Use the Pydantic model as the type hint for a single parameter
+    payload: NotePayload,
     db_client: AsyncIOMotorClient = Depends(get_database_client)
 ):
     db = db_client.notes_db
+    # Access data via the payload object
     note_data = {
-        "user_id": user_id,
-        "content": content,
-        "class_id": class_id
+        "user_id": payload.user_id,
+        "content": payload.content,
+        "class_id": payload.class_id
     }
+    # Alternative using Pydantic's dict() method:
+    # note_data = payload.dict()
+
     result = await db.notes.insert_one(note_data)
     if not result.inserted_id:
         raise HTTPException(status_code=500, detail="Failed to submit note")
     return {"message": "Note submitted successfully", "id": str(result.inserted_id)}
+
+# ... (rest of your routes remain the same) ...
 
 
 # Separate route that retrieves notes for a given student and class,
