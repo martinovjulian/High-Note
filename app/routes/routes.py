@@ -50,31 +50,34 @@ async def update_student_concepts(
     similarity_method: Optional[str] = "string",
     db_client: AsyncIOMotorClient = Depends(get_database_client)
 ):
-    db = db_client.notes_db
-    # Retrieve all notes for the specified student and class
-    notes_docs = await db.notes.find({"user_id": user_id, "class_id": class_id}).to_list(length=None)
-    if not notes_docs:
-        raise HTTPException(status_code=404, detail="No notes found for this student and class.")
-    
-    # Combine the content from all retrieved notes into a single text string
-    aggregated_text = " ".join([doc["content"] for doc in notes_docs if "content" in doc])
-    
-    # Call extract_key_concepts positionally (to avoid any keyword argument issues)
-    concepts = extract_key_concepts(aggregated_text, num_concepts, similarity_threshold, similarity_method)
-    
-    # Update or insert (upsert) the student's concepts in a dedicated collection (student_concepts)
-    await db.student_concepts.update_one(
-        {"user_id": user_id, "class_id": class_id},
-        {"$set": {"concepts": concepts}},
-        upsert=True
-    )
-    
-    return {
-        "message": "Student concepts updated successfully.",
-        "user_id": user_id,
-        "class_id": class_id,
-        "concepts": concepts
-    }
+    # Use async with to properly retrieve the client from the async context manager
+    async with db_client as client:
+        db = client.notes_db
+        # Retrieve all notes for the specified student and class
+        notes_docs = await db.notes.find({"user_id": user_id, "class_id": class_id}).to_list(length=None)
+        if not notes_docs:
+            raise HTTPException(status_code=404, detail="No notes found for this student and class.")
+        
+        # Combine the content from all retrieved notes into a single text string
+        aggregated_text = " ".join([doc["content"] for doc in notes_docs if "content" in doc])
+        
+        # Call extract_key_concepts positionally
+        concepts = extract_key_concepts(aggregated_text, num_concepts, similarity_threshold, similarity_method)
+        
+        # Update or insert (upsert) the student's concepts in a dedicated collection (student_concepts)
+        await db.student_concepts.update_one(
+            {"user_id": user_id, "class_id": class_id},
+            {"$set": {"concepts": concepts}},
+            upsert=True
+        )
+        
+        return {
+            "message": "Student concepts updated successfully.",
+            "user_id": user_id,
+            "class_id": class_id,
+            "concepts": concepts
+        }
+
 
 from sentence_transformers import SentenceTransformer, util
 
