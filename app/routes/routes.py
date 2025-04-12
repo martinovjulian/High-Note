@@ -202,16 +202,17 @@ async def get_student_notes(
     class_id: str,
     db_client: AsyncIOMotorClient = Depends(get_database_client)
 ):
-    db = db_client.notes_db
-    notes = await db.notes.find({
-        "user_id": user_id,
-        "class_id": class_id
-    }).to_list(length=None)
-    
-    if not notes:
-        raise HTTPException(status_code=404, detail="No notes found for this student and class.")
-    
-    return {
-        "notes": [note["content"] for note in notes if "content" in note]
-    }
+    async with get_database_client() as client:
+        db = client.notes_db
+        notes = await db.notes.find({
+            "user_id": user_id,
+            "class_id": class_id
+        }).to_list(length=None)
+        
+        if not notes:
+            raise HTTPException(status_code=404, detail="No notes found for this student and class.")
+        
+        return {
+            "notes": [note["content"] for note in notes if "content" in note]
+        }
 

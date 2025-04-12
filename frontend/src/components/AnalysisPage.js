@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 function AnalysisPage() {
   const [searchParams] = useSearchParams();
   const classId = searchParams.get('classId');
   const userId = searchParams.get('userId');
+  const { token } = useAuth();
 
   const [notesContent, setNotesContent] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,8 +21,9 @@ function AnalysisPage() {
 
     const fetchNotes = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/get-student-notes', {
+        const response = await axios.get('http://localhost:8000/notes/get-student-notes', {
           params: { user_id: userId, class_id: classId },
+          headers: { Authorization: `Bearer ${token}` }
         });
         setNotesContent(response.data.notes);
       } catch (error) {
@@ -34,7 +37,7 @@ function AnalysisPage() {
     const delay = setTimeout(() => setLoading(false), 5000);
 
     return () => clearTimeout(delay);
-  }, [userId, classId]);
+  }, [userId, classId, token]);
 
   if (loading) {
     return (
