@@ -70,7 +70,9 @@ function AppContent() {
   const handleLobbyClick = async (lobby) => {
     try {
       // Fetch full lobby details (includes the password field).
-      const res = await axios.get(`http://localhost:8000/lobbies/${lobby.lobby_id}`);
+      const res = await axios.get(`http://localhost:8000/lobby/lobbies/${lobby.lobby_id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const fullLobby = res.data;
       // If the lobby does not require a password, navigate immediately.
       if (!fullLobby.password) {
