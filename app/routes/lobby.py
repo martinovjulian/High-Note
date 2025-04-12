@@ -50,9 +50,15 @@ async def get_all_lobbies(
     lobbies_cursor = db.lobbies.find({})
     lobbies = await lobbies_cursor.to_list(length=None)
 
-    return [{"lobby_id": str(lobby["_id"]), "lobby_name": lobby["lobby_name"]} for lobby in lobbies]
-
-from bson import ObjectId
+    return [
+        {
+            "lobby_id": str(lobby["_id"]),
+            "lobby_name": lobby.get("lobby_name", ""),
+            "description": lobby.get("description", ""),
+            "user_count": lobby.get("user_count", 0)  # 👈 now included
+        }
+        for lobby in lobbies
+    ]
 
 @router.put("/lobbies/{lobby_id}/increment-user-count")
 async def increment_user_count(

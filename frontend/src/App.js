@@ -1,85 +1,89 @@
+// src/App.js
 import React, { useState, useEffect } from 'react';
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Link,
-  useLocation
-} from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import CreateLobby from './components/lobby/CreateLobby';
-import Lobby from './components/lobby/Lobby';
+import CreateLobby from './components/System/CreateLobby.js';
+import Lobby from './components/System/Lobby.js';
 
 function AppContent() {
   const location = useLocation();
   const isLobbyPage = location.pathname.startsWith('/lobby');
-
   const [lobbies, setLobbies] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:8000/lobbies')
-      .then(response => setLobbies(response.data))
-      .catch(error => console.error('Error fetching lobbies:', error));
+    axios
+      .get('http://localhost:8000/lobbies')
+      .then((response) => setLobbies(response.data))
+      .catch((error) => console.error('Error fetching lobbies:', error));
   }, []);
 
   const addLobby = (lobbyName, description) => {
-    axios.post('http://localhost:8000/create-lobby', {
-      lobby_name: lobbyName,
-      description: description,
-      user_count: 0
-    })
-      .then(response => {
-        setLobbies([...lobbies, {
-          lobby_id: response.data.lobby_id,
-          lobby_name: lobbyName,
-          description: description,
-          user_count: 0
-        }]);
+    axios
+      .post('http://localhost:8000/create-lobby', {
+        lobby_name: lobbyName,
+        description: description,
+        user_count: 0,
       })
-      .catch(error => console.error('Error creating lobby:', error));
+      .then(() => {
+        // Refresh lobbies from DB to get the correct user_count
+        axios
+          .get('http://localhost:8000/lobbies')
+          .then((response) => setLobbies(response.data))
+          .catch((error) => console.error('Error re-fetching lobbies:', error));
+      })
+      .catch((error) => console.error('Error creating lobby:', error));
   };
+  
 
   return (
-    <div className={`${isLobbyPage ? '' : 'min-h-screen bg-gray-50'}`}>
+    <div className={`${isLobbyPage ? '' : 'min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white'}`}>
       {!isLobbyPage && (
-        <>
-          <div className="py-8 px-4 max-w-5xl mx-auto">
-            <CreateLobby onCreateLobby={addLobby} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-10">
-              {lobbies.map((lobby, index) => {
-                const gradients = [
-                  'from-pink-500 to-red-400',
-                  'from-indigo-500 to-purple-500',
-                  'from-blue-500 to-cyan-400',
-                  'from-teal-500 to-green-400',
-                  'from-yellow-400 to-orange-400',
-                ];
-                const gradient = gradients[index % gradients.length];
+        <div className="py-12 px-6 max-w-6xl mx-auto">
+          <CreateLobby onCreateLobby={addLobby} />
 
-                return (
-                  <Link
-                    key={lobby.lobby_id}
-                    to={`/lobby/${lobby.lobby_id}`}
-                    className="transform hover:scale-105 transition-all duration-300"
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mt-12">
+            {lobbies.map((lobby, index) => {
+              const gradients = [
+                'from-fuchsia-600 to-pink-500',
+                'from-indigo-600 to-purple-500',
+                'from-cyan-500 to-blue-500',
+                'from-lime-500 to-emerald-400',
+                'from-yellow-400 to-orange-500',
+              ];
+              const gradient = gradients[index % gradients.length];
+
+              return (
+                <Link
+                  key={lobby.lobby_id}
+                  to={`/lobby/${lobby.lobby_id}`}
+                  className="relative group transform transition duration-500 hover:scale-[1.03] animate-float"
+                >
+                  <div
+                    className={`bg-gradient-to-br ${gradient} rounded-2xl p-6 shadow-2xl backdrop-blur-md bg-opacity-80 border border-white/20 transition-all duration-300`}
                   >
-                    <div
-                      className={`rounded-xl shadow-xl p-6 bg-gradient-to-br ${gradient} text-white`}
-                    >
-                      <h3 className="text-xl font-semibold mb-2">{lobby.lobby_name}</h3>
-                      <p className="text-sm mb-3 opacity-90">
-                        {lobby.description || 'No description provided.'}
-                      </p>
-                      <div className="text-sm flex justify-between items-center font-medium">
-                        <span>{lobby.user_count || 0} Active</span>
-                        <span className="text-lg">🚀</span>
-                      </div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-2xl font-bold tracking-wide">{lobby.lobby_name}</h3>
+                      <span className="inline-flex items-center px-2 py-1 text-sm font-semibold bg-green-500 text-white rounded-full animate-pulse shadow">
+                        🟢 Online
+                      </span>
                     </div>
-                  </Link>
-                );
-              })}
-            </div>
+
+                    <p className="text-sm text-white/90 mb-4">
+                      {lobby.description || 'No description provided.'}
+                    </p>
+
+                    <div className="flex items-center gap-2 text-sm font-medium text-white/90">
+  <span className="text-lg">👥</span>
+  <span>{lobby.user_count || 0} Active Users</span>
+</div>
+
+
+                  </div>
+                </Link>
+              );
+            })}
           </div>
-        </>
+        </div>
       )}
       <Routes>
         <Route path="/lobby/:lobbyId" element={<Lobby />} />

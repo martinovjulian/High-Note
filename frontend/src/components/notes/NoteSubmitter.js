@@ -1,4 +1,3 @@
-// src/components/NoteSubmitter.js
 import React, { useState } from 'react';
 
 const API_BASE_URL = 'http://localhost:8000';
@@ -6,7 +5,6 @@ const API_BASE_URL = 'http://localhost:8000';
 function NoteSubmitter({ lobbyId }) {
   const [userId, setUserId] = useState('');
   const [content, setContent] = useState('');
-
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -23,7 +21,6 @@ function NoteSubmitter({ lobbyId }) {
       content: content,
     };
 
-    // Basic validation
     if (!userId || !lobbyId || !content) {
       setError('Please fill in all fields.');
       setIsLoading(false);
@@ -62,15 +59,13 @@ function NoteSubmitter({ lobbyId }) {
             errorDetail = JSON.stringify(result.detail);
           }
         }
-        console.error('Server Error Response:', result);
         throw new Error(errorDetail);
       }
 
-      setMessage(`Note submitted successfully! ID: ${result.id}`);
+      setMessage(`✅ Note submitted! ID: ${result.id}`);
       setUserId('');
       setContent('');
 
-      // Optional: increment user count in lobby
       const incrementResponse = await fetch(`${API_BASE_URL}/lobbies/${lobbyId}/increment-user-count`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -79,135 +74,87 @@ function NoteSubmitter({ lobbyId }) {
       if (!incrementResponse.ok) {
         const incrementError = await incrementResponse.json();
         console.error('Increment user count failed:', incrementError);
-        setError('Note submitted, but failed to increment lobby count.');
+        setError('Note submitted, but failed to increment user count.');
       }
     } catch (err) {
       console.error("Submission failed:", err);
-      setError(err.message || 'Failed to submit note. Check console for details.');
+      setError(err.message || 'Failed to submit note.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div style={styles.container}>
-      <h2>Submit a New Note</h2>
-      <p style={{ fontSize: '0.9em', color: '#555' }}>
-        Fill in the details and click submit. Check the browser's developer console (F12) for debugging logs.
+    <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur-xl rounded-xl p-8 border border-white/20 shadow-2xl mt-10 animate-fadeIn text-white">
+      <h2 className="text-3xl font-bold mb-2 text-purple-200">📝 Submit a New Note</h2>
+      <p className="text-sm text-white/80 mb-6">
+        Fill in the details and hit submit. Results will be shown below.
       </p>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <div style={styles.formGroup}>
-          <label htmlFor="userId" style={styles.label}>User ID:</label>
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label htmlFor="userId" className="block font-medium mb-1">User ID</label>
           <input
-            type="text"
             id="userId"
+            type="text"
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
-            style={styles.input}
             disabled={isLoading}
             required
+            className="w-full px-4 py-2 rounded-lg bg-white/20 border border-white/30 focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-white/70"
           />
         </div>
 
-        <div style={styles.formGroup}>
-          <label htmlFor="classId" style={styles.label}>Lobby ID:</label>
+        <div>
+          <label htmlFor="classId" className="block font-medium mb-1">Lobby ID</label>
           <input
-            type="text"
             id="classId"
+            type="text"
             value={lobbyId}
             readOnly
-            style={styles.input}
+            className="w-full px-4 py-2 rounded-lg bg-gray-600/30 text-white/80 border border-white/30 cursor-not-allowed"
           />
         </div>
 
-        <div style={styles.formGroup}>
-          <label htmlFor="content" style={styles.label}>Note Content:</label>
+        <div>
+          <label htmlFor="content" className="block font-medium mb-1">Note Content</label>
           <textarea
             id="content"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            style={styles.textarea}
             rows="6"
             disabled={isLoading}
             required
+            className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-white/70 resize-y"
           />
         </div>
 
-        {message && <p style={styles.successMessage}>{message}</p>}
-        {error && <p style={{ ...styles.errorMessage, fontWeight: 'bold' }}>{error}</p>}
+        {message && (
+          <div className="bg-green-600/20 text-green-300 border border-green-500 px-4 py-2 rounded-lg text-sm font-medium">
+            {message}
+          </div>
+        )}
 
-        <button type="submit" style={styles.button} disabled={isLoading}>
-          {isLoading ? 'Submitting...' : 'Submit Note'}
+        {error && (
+          <div className="bg-red-600/20 text-red-300 border border-red-500 px-4 py-2 rounded-lg text-sm font-medium">
+            {error}
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className={`w-full py-3 font-bold rounded-lg text-white transition duration-300 ${
+            isLoading
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:scale-105 hover:shadow-lg hover:shadow-indigo-500/40'
+          }`}
+        >
+          {isLoading ? 'Submitting...' : '🚀 Submit Note'}
         </button>
       </form>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    maxWidth: '500px',
-    margin: '20px auto',
-    padding: '20px',
-    border: '1px solid #ccc',
-    borderRadius: '8px',
-    fontFamily: 'Arial, sans-serif',
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '15px',
-  },
-  formGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  label: {
-    marginBottom: '5px',
-    fontWeight: 'bold',
-  },
-  input: {
-    padding: '10px',
-    border: '1px solid #ccc',
-    borderRadius: '4px',
-    fontSize: '1rem',
-  },
-  textarea: {
-    padding: '10px',
-    border: '1px solid #ccc',
-    borderRadius: '4px',
-    fontSize: '1rem',
-    minHeight: '100px',
-    resize: 'vertical',
-  },
-  button: {
-    padding: '10px 15px',
-    backgroundColor: '#007bff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    fontSize: '1rem',
-    cursor: 'pointer',
-    transition: 'background-color 0.2s ease',
-  },
-  successMessage: {
-    color: 'green',
-    marginTop: '10px',
-    textAlign: 'center',
-    border: '1px solid green',
-    padding: '8px',
-    borderRadius: '4px',
-    backgroundColor: '#e6ffed',
-  },
-  errorMessage: {
-    color: 'red',
-    marginTop: '10px',
-    textAlign: 'center',
-    border: '1px solid red',
-    padding: '8px',
-    borderRadius: '4px',
-    backgroundColor: '#ffe6e6',
-  },
-};
 
 export default NoteSubmitter;
