@@ -1,39 +1,57 @@
 // src/App.js
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import axios from 'axios';
 import CreateLobby from './components/System/CreateLobby.js';
 import Lobby from './components/System/Lobby.js';
+import Login from './components/Auth/Login.js';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 function AppContent() {
   const location = useLocation();
   const isLobbyPage = location.pathname.startsWith('/lobby');
   const [lobbies, setLobbies] = useState([]);
+  const { token } = useAuth();
 
   useEffect(() => {
-    axios
-      .get('http://localhost:8000/lobbies')
-      .then((response) => setLobbies(response.data))
-      .catch((error) => console.error('Error fetching lobbies:', error));
-  }, []);
+    if (token) {
+      axios
+        .get('http://localhost:8000/lobby/lobbies', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        .then((response) => setLobbies(response.data))
+        .catch((error) => console.error('Error fetching lobbies:', error));
+    }
+  }, [token]);
 
   const addLobby = (lobbyName, description) => {
     axios
-      .post('http://localhost:8000/create-lobby', {
+      .post('http://localhost:8000/lobby/create-lobby', {
         lobby_name: lobbyName,
         description: description,
-        user_count: 0,
+        user_count: 1,
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       })
       .then(() => {
         // Refresh lobbies from DB to get the correct user_count
         axios
-          .get('http://localhost:8000/lobbies')
+          .get('http://localhost:8000/lobby/lobbies', {
+            headers: { Authorization: `Bearer ${token}` }
+          })
           .then((response) => setLobbies(response.data))
           .catch((error) => console.error('Error re-fetching lobbies:', error));
       })
       .catch((error) => console.error('Error creating lobby:', error));
   };
-  
+
+  if (!token) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900">
+        <Login />
+      </div>
+    );
+  }
 
   return (
     <div className={`${isLobbyPage ? '' : 'min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 text-white'}`}>
@@ -73,11 +91,9 @@ function AppContent() {
                     </p>
 
                     <div className="flex items-center gap-2 text-sm font-medium text-white/90">
-  <span className="text-lg">👥</span>
-  <span>{lobby.user_count || 0} Active Users</span>
-</div>
-
-
+                      <span className="text-lg">👥</span>
+                      <span>{lobby.user_count || 0} Active Users</span>
+                    </div>
                   </div>
                 </Link>
               );
@@ -94,9 +110,11 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <AuthProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </AuthProvider>
   );
 }
 
