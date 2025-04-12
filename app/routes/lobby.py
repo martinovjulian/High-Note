@@ -4,7 +4,9 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
 from app.db import get_database_client
-from bson import ObjectId
+
+from bson.objectid import ObjectId
+
 
 router = APIRouter()
 
