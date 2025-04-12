@@ -4,9 +4,11 @@ from difflib import SequenceMatcher
 from rake_nltk import Rake
 from nltk.corpus import stopwords
 from sentence_transformers import SentenceTransformer, util
-
 import nltk
+
+# Download required resources if not present
 nltk.download('stopwords')
+nltk.download('punkt_tab')  # This downloads the missing tokenizer data
 
 model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
@@ -31,6 +33,7 @@ def filter_similar_phrases(phrases: List[str], threshold: float = 0.75, method: 
     return filtered
 
 def extract_key_concepts(text: str, num_concepts: int = 5, threshold: float = 0.75, similarity_method: str = 'string') -> List[str]:
+    # Initialize RAKE with English stopwords from NLTK
     rake = Rake(stopwords=stopwords.words('english'))
     rake.extract_keywords_from_text(text)
     ranked = rake.get_ranked_phrases()
