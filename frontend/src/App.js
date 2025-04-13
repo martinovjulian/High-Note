@@ -32,7 +32,7 @@ function AppContent() {
   }, [token]);
 
   // Updated addLobby: combining user_count and password requirements
-  const addLobby = (lobbyName, description, password) => {
+  const addLobby = (lobbyName, description, password, advancedSettings) => {
     axios
       .post(
         'http://localhost:8000/lobby/create-lobby',
@@ -41,6 +41,7 @@ function AppContent() {
           description: description,
           user_count: 1, // assuming the creator joins the lobby immediately
           password: password, // include the entered password
+          advanced_settings: advancedSettings // include the advanced settings
         },
         {
           headers: { Authorization: `Bearer ${token}` }

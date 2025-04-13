@@ -14,26 +14,6 @@ function Lobby() {
   const navigate = useNavigate();
   const { token } = useAuth();
 
-  // Advanced settings with separate concept counts for student and class,
-  // plus thresholds.
-  const [advancedSettings, setAdvancedSettings] = useState({
-    numConceptsStudent: 10,
-    numConceptsClass: 15,
-    similarityThresholdUpdate: 0.75,
-    similarityThresholdAnalyze: 0.8,
-  });
-
-  const handleSettingsChange = (e) => {
-    const { name, value } = e.target;
-    setAdvancedSettings((prev) => ({
-      ...prev,
-      [name]:
-        name.includes("numConcepts")
-          ? parseInt(value, 10)
-          : parseFloat(value),
-    }));
-  };
-
   useEffect(() => {
     setLobbyDetails(null);
     axios
@@ -74,65 +54,43 @@ function Lobby() {
           </p>
         </div>
 
-        {/* Pass advanced settings as a prop to NoteSubmitter */}
-        <NoteSubmitter lobbyId={lobbyId} advancedSettings={advancedSettings} />
+        {/* Pass lobby's advanced settings as a prop to NoteSubmitter if available */}
+        {lobbyDetails && (
+          <NoteSubmitter 
+            lobbyId={lobbyId} 
+            advancedSettings={lobbyDetails.advanced_settings || {
+              numConceptsStudent: 10,
+              numConceptsClass: 15,
+              similarityThresholdUpdate: 0.75,
+              similarityThresholdAnalyze: 0.8,
+            }} 
+          />
+        )}
 
-        {/* Advanced Settings Section */}
-        <div className="mt-10 bg-white/20 p-4 rounded-xl">
-          <h3 className="text-xl font-bold mb-2">Advanced Settings</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium">
-                Student Concepts Count
-              </label>
-              <input
-                type="number"
-                name="numConceptsStudent"
-                value={advancedSettings.numConceptsStudent}
-                onChange={handleSettingsChange}
-                className="mt-1 block w-full rounded-md p-2 text-black"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium">
-                Class Concepts Count
-              </label>
-              <input
-                type="number"
-                name="numConceptsClass"
-                value={advancedSettings.numConceptsClass}
-                onChange={handleSettingsChange}
-                className="mt-1 block w-full rounded-md p-2 text-black"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium">
-                Update Threshold
-              </label>
-              <input
-                type="number"
-                step="0.05"
-                name="similarityThresholdUpdate"
-                value={advancedSettings.similarityThresholdUpdate}
-                onChange={handleSettingsChange}
-                className="mt-1 block w-full rounded-md p-2 text-black"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium">
-                Analyze Threshold
-              </label>
-              <input
-                type="number"
-                step="0.05"
-                name="similarityThresholdAnalyze"
-                value={advancedSettings.similarityThresholdAnalyze}
-                onChange={handleSettingsChange}
-                className="mt-1 block w-full rounded-md p-2 text-black"
-              />
+        {/* Display the advanced settings for informational purposes */}
+        {lobbyDetails && lobbyDetails.advanced_settings && (
+          <div className="mt-10 bg-white/20 p-4 rounded-xl">
+            <h3 className="text-xl font-bold mb-2">Lobby Advanced Settings</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div>
+                <span className="block text-sm font-medium">Student Concepts Count</span>
+                <span className="text-lg font-bold">{lobbyDetails.advanced_settings.numConceptsStudent}</span>
+              </div>
+              <div>
+                <span className="block text-sm font-medium">Class Concepts Count</span>
+                <span className="text-lg font-bold">{lobbyDetails.advanced_settings.numConceptsClass}</span>
+              </div>
+              <div>
+                <span className="block text-sm font-medium">Update Threshold</span>
+                <span className="text-lg font-bold">{lobbyDetails.advanced_settings.similarityThresholdUpdate}</span>
+              </div>
+              <div>
+                <span className="block text-sm font-medium">Analyze Threshold</span>
+                <span className="text-lg font-bold">{lobbyDetails.advanced_settings.similarityThresholdAnalyze}</span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Existing deletion functionality */}
         <div className="mt-10">
