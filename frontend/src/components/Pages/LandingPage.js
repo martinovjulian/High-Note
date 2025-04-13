@@ -20,7 +20,7 @@ const LandingPage = () => {
         {/* Navigation */}
         <nav className="flex justify-between items-center py-6">
           <div className="text-3xl font-bold bg-gradient-to-r from-white to-purple-300 bg-clip-text text-transparent">
-            NoteSync
+            HighNote
           </div>
           <div className="space-x-8">
             {/* <a href="#features" className="text-white hover:text-purple-300 transition-colors">Features</a>
@@ -64,11 +64,6 @@ const LandingPage = () => {
                 onClick={handleGetStarted}
                 className="px-8 py-3 bg-white text-indigo-800 font-bold rounded-full shadow-md hover:-translate-y-1 transform transition-all hover:shadow-lg">
                 Get Started
-              </button>
-              <button 
-                onClick={handleLearnMore}
-                className="px-8 py-3 bg-transparent border-2 border-white text-white font-bold rounded-full hover:-translate-y-1 transform transition-all hover:shadow-lg">
-                Learn More
               </button>
             </div>
           </div>

@@ -452,11 +452,6 @@ return annotatedContent;
                 <p className="text-white/90 text-lg mb-4">
                   Transform your notes with AI-powered contextual insights, detailed explanations, and technical annotations.
                 </p>
-                <div className="flex flex-wrap gap-3 mb-4">
-                  <span className="px-3 py-1 bg-white/20 rounded-full text-sm">Time Complexity Analysis</span>
-                  <span className="px-3 py-1 bg-white/20 rounded-full text-sm">Implementation Details</span>
-                  <span className="px-3 py-1 bg-white/20 rounded-full text-sm">Edge Case Handling</span>
-                </div>
                 <p className="text-white/80 text-sm italic">
                   Let High Note analyze your notes to enhance your understanding with expert-level insights tailored to your content.
                 </p>

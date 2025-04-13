@@ -1,7 +1,8 @@
 // src/components/notes/NoteSubmitter.js
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { DocumentTextIcon, DocumentArrowUpIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
 const API_BASE_URL = 'http://localhost:8000';
 
@@ -11,9 +12,48 @@ function NoteSubmitter({ lobbyId, advancedSettings }) {
   const [pdfFile, setPdfFile] = useState(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [wordCount, setWordCount] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const navigate = useNavigate();
 
+  const MIN_WORD_COUNT = 50;
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+  const handleContentChange = (e) => {
+    const text = e.target.value;
+    setContent(text);
+    const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+    setWordCount(words.length);
+  };
+
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        setError('PDF file size must be less than 10MB');
+        setPdfFile(null);
+      } else if (file.type !== 'application/pdf') {
+        setError('Please upload a PDF file');
+        setPdfFile(null);
+      } else {
+        setError('');
+        setPdfFile(file);
+      }
+    }
+  }, []);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -21,11 +61,11 @@ function NoteSubmitter({ lobbyId, advancedSettings }) {
       if (file.size > MAX_FILE_SIZE) {
         setError('PDF file size must be less than 10MB');
         setPdfFile(null);
-        e.target.value = ''; // Clear the file input
+        e.target.value = '';
       } else if (file.type !== 'application/pdf') {
         setError('Please upload a PDF file');
         setPdfFile(null);
-        e.target.value = ''; // Clear the file input
+        e.target.value = '';
       } else {
         setError('');
         setPdfFile(file);
@@ -47,6 +87,12 @@ function NoteSubmitter({ lobbyId, advancedSettings }) {
 
     if (!content && !pdfFile) {
       setError('Please provide note text or upload a PDF.');
+      setIsLoading(false);
+      return;
+    }
+
+    if (content && wordCount < MIN_WORD_COUNT) {
+      setError(`Please provide at least ${MIN_WORD_COUNT} words in your note.`);
       setIsLoading(false);
       return;
     }
@@ -184,67 +230,100 @@ const analyzeResponse = await fetch(
   };
 
   return (
-    <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur-xl rounded-xl p-8 border border-white/20 shadow-2xl mt-10 animate-fadeIn text-white">
-      <h2 className="text-3xl font-bold mb-2 text-purple-200">📝 Submit a New Note</h2>
+    <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur-xl rounded-xl p-8 border border-white/20 shadow-2xl mt-10 animate-fadeIn text-white transform hover:scale-[1.02] transition-transform duration-300">
+      <div className="flex items-center gap-2 mb-2">
+        <DocumentTextIcon className="h-8 w-8 text-white" />
+        <h2 className="text-3xl font-bold text-white">Submit a New Note</h2>
+      </div>
       <p className="text-sm text-white/80 mb-6">
         Fill in the details, upload a PDF if needed, and hit submit. You will be redirected to view your analysis.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label htmlFor="content" className="block font-medium mb-1">
+          <label htmlFor="content" className="block font-medium mb-1 text-white">
             Note Content
           </label>
           <textarea
             id="content"
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={handleContentChange}
             rows="6"
             disabled={isLoading}
-            placeholder="Enter your note text here (optional if uploading a PDF)"
-            className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-white/70 resize-y"
+            placeholder="Enter your note text here (minimum 50 words)"
+            className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 text-white placeholder-white/70 resize-y transition-all duration-300 hover:bg-white/30"
           />
+          <div className="mt-2 text-sm text-white/70">
+            Word count: {wordCount}/{MIN_WORD_COUNT} words
+            {wordCount >= MIN_WORD_COUNT ? (
+              <span className="ml-2 text-green-400">✓ Minimum requirement met</span>
+            ) : (
+              <span className="ml-2 text-red-400">✗ Minimum requirement not met</span>
+            )}
+          </div>
         </div>
 
         <div>
-          <label htmlFor="pdfFile" className="block font-medium mb-1">
+          <label htmlFor="pdfFile" className="block font-medium mb-1 text-white">
             Upload PDF (optional)
           </label>
-          <input
-            id="pdfFile"
-            type="file"
-            accept="application/pdf"
-            onChange={handleFileChange}
-            disabled={isLoading}
-            className="w-full px-4 py-2 rounded-lg bg-gray-600/30 text-white/80 border border-white/30"
-          />
+          <div
+            className={`w-full p-6 border-2 border-dashed rounded-lg transition-all duration-300 ${
+              isDragging
+                ? 'border-white/50 bg-white/10'
+                : 'border-white/30 hover:border-white/50'
+            }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <div className="flex flex-col items-center justify-center gap-2">
+              <DocumentArrowUpIcon className="h-8 w-8 text-white/70" />
+              <p className="text-sm text-white/70">
+                Drag and drop your PDF here, or{' '}
+                <label htmlFor="pdfFile" className="text-white cursor-pointer hover:text-white/80">
+                  click to browse
+                </label>
+              </p>
+              {pdfFile && (
+                <p className="text-sm text-white/70 mt-2">
+                  Selected file: {pdfFile.name}
+                </p>
+              )}
+            </div>
+            <input
+              id="pdfFile"
+              type="file"
+              accept="application/pdf"
+              onChange={handleFileChange}
+              disabled={isLoading}
+              className="hidden"
+            />
+          </div>
         </div>
 
         {error && (
-          <div className="bg-red-600/20 text-red-300 border border-red-500 px-4 py-2 rounded-lg text-sm font-medium">
+          <div className="bg-red-600/20 text-red-300 border border-red-500 px-4 py-2 rounded-lg text-sm font-medium animate-shake">
             {error}
           </div>
         )}
 
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={isLoading || (content && wordCount < MIN_WORD_COUNT)}
           className={`w-full py-3 font-bold rounded-lg text-white transition duration-300 ${
-            isLoading
+            isLoading || (content && wordCount < MIN_WORD_COUNT)
               ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:scale-105 hover:shadow-lg hover:shadow-indigo-500/40'
+              : 'bg-gradient-to-r from-white/20 to-white/10 hover:from-white/30 hover:to-white/20 hover:scale-105 hover:shadow-lg hover:shadow-white/20'
           }`}
         >
           {isLoading ? (
             <div className="flex items-center justify-center">
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
+              <ArrowPathIcon className="animate-spin h-5 w-5 mr-2" />
               Processing...
             </div>
           ) : (
-            '🚀 Submit & Analyze'
+            'Analyze'
           )}
         </button>
       </form>

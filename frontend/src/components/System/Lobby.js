@@ -32,6 +32,9 @@ function Lobby() {
   const [password, setPassword] = useState('');
   const [deleteError, setDeleteError] = useState('');
 
+  // Add new state for tab management
+  const [activeTab, setActiveTab] = useState('general');
+
   // Fetch lobby details and initialize settings
   useEffect(() => {
     setLobbyDetails(null);
@@ -74,6 +77,7 @@ function Lobby() {
   };
 
   const handleSettingsChange = (e) => {
+    if (!isCreator) return; // Prevent changes if not creator
     const { name, value } = e.target;
     setEditedSettings((prev) => ({
       ...prev,
@@ -82,7 +86,7 @@ function Lobby() {
   };
 
   const handleSaveSettings = async () => {
-    if (!editedSettings) return;
+    if (!editedSettings || !isCreator) return;
 
     setIsSaving(true);
     setSaveError('');
@@ -153,28 +157,48 @@ function Lobby() {
           
           <div className="text-center mb-12">
             {loading ? (
-              <h2 className="text-4xl font-extrabold tracking-wide text-white drop-shadow-lg mb-2">
-                Loading...
-              </h2>
-            ) : errorMessage ? (
-              <h2 className="text-4xl font-extrabold tracking-wide text-red-400 drop-shadow-lg mb-2">
-                {errorMessage}
-              </h2>
-            ) : (
-              <>
-                <h2 className="text-4xl font-extrabold tracking-wide text-white drop-shadow-lg mb-2">
-                  {lobbyDetails.lobby_name}
+              <div className="flex flex-col items-center gap-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+                <h2 className="text-4xl font-extrabold tracking-wide text-white drop-shadow-lg">
+                  Loading...
                 </h2>
-                {lobbyDetails.created_by && (
-                  <p className="text-purple-300 text-xs font-medium mb-1">
-                    Created by: {lobbyDetails.created_by} {isCreator && <span className="bg-purple-500/30 px-2 py-0.5 rounded-full text-[10px] ml-1">You</span>}
-                  </p>
+              </div>
+            ) : errorMessage ? (
+              <div className="bg-red-500/20 border border-red-500 p-6 rounded-xl">
+                <h2 className="text-4xl font-extrabold tracking-wide text-red-400 drop-shadow-lg mb-2">
+                  {errorMessage}
+                </h2>
+                <p className="text-red-300">Please try refreshing the page or contact support if the issue persists.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="relative">
+                  <h2 className="text-5xl font-extrabold tracking-wide text-white drop-shadow-lg mb-2">
+                    {lobbyDetails.lobby_name}
+                  </h2>
+                  {lobbyDetails.created_by && (
+                    <p className="text-purple-300 text-sm font-medium mb-1">
+                      Created by: {lobbyDetails.created_by} {isCreator && (
+                        <span className="bg-purple-500/30 px-2 py-0.5 rounded-full text-xs ml-1">
+                          You
+                        </span>
+                      )}
+                    </p>
+                  )}
+                </div>
+                
+                {/* Lobby Description */}
+                {lobbyDetails.description && (
+                  <div className="max-w-2xl mx-auto mt-6 p-6 bg-white/10 rounded-xl backdrop-blur-sm border border-purple-400/30">
+                    <h3 className="text-lg font-semibold text-purple-200 mb-2">About this Lobby</h3>
+                    <p className="text-purple-100 leading-relaxed">
+                      {lobbyDetails.description}
+                    </p>
+                  </div>
                 )}
-              </>
+
+              </div>
             )}
-            <p className="text-purple-200 text-sm font-medium">
-              Welcome to your personal note-taking lounge ✨
-            </p>
           </div>
         </div>
 
@@ -186,8 +210,8 @@ function Lobby() {
           />
         )}
 
-        {/* Settings Modal - Only shown if user is creator AND modal is open */}
-        {showSettingsModal && isCreator && lobbyDetails && editedSettings && (
+        {/* Settings Modal */}
+        {showSettingsModal && lobbyDetails && editedSettings && (
           <div
             className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] backdrop-blur-sm animate-fadeIn"
             onClick={() => setShowSettingsModal(false)}
@@ -197,7 +221,14 @@ function Lobby() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-center mb-6 border-b border-purple-400/30 pb-3">
-                <h3 className="text-2xl font-bold text-white">Advanced Settings</h3>
+                <div className="flex items-center gap-3">
+                  <h3 className="text-2xl font-bold text-white">Lobby Settings</h3>
+                  {isCreator && (
+                    <span className="bg-purple-500/30 px-2 py-0.5 rounded-full text-xs font-medium text-purple-200">
+                      Creator
+                    </span>
+                  )}
+                </div>
                 <button
                   onClick={() => setShowSettingsModal(false)}
                   className="text-white bg-purple-700/50 hover:bg-purple-700/80 p-2 rounded-lg transition-colors w-10 h-10 flex items-center justify-center"
@@ -208,121 +239,210 @@ function Lobby() {
                   </svg>
                 </button>
               </div>
-              
-              {/* Editable Settings Form */}
-              <div className="grid grid-cols-1 gap-4 mb-8">
-                <div className="bg-white/10 p-4 rounded-lg shadow-inner hover:bg-white/15 transition-colors">
-                  <label className="block text-sm font-medium text-purple-200 mb-1">
-                    Student Concepts Count
-                  </label>
-                  <input
-                    type="number"
-                    name="numConceptsStudent"
-                    value={editedSettings.numConceptsStudent}
-                    onChange={handleSettingsChange}
-                    className="w-full bg-white/20 border border-purple-400/30 rounded-lg p-2 text-white font-bold text-xl"
-                    min="1"
-                    max="50"
-                  />
-                </div>
-                <div className="bg-white/10 p-4 rounded-lg shadow-inner hover:bg-white/15 transition-colors">
-                  <label className="block text-sm font-medium text-purple-200 mb-1">
-                    Class Concepts Count
-                  </label>
-                  <input
-                    type="number"
-                    name="numConceptsClass"
-                    value={editedSettings.numConceptsClass}
-                    onChange={handleSettingsChange}
-                    className="w-full bg-white/20 border border-purple-400/30 rounded-lg p-2 text-white font-bold text-xl"
-                    min="1"
-                    max="50"
-                  />
-                </div>
-                <div className="bg-white/10 p-4 rounded-lg shadow-inner hover:bg-white/15 transition-colors">
-                  <label className="block text-sm font-medium text-purple-200 mb-1">
-                    Update Threshold
-                  </label>
-                  <input
-                    type="number"
-                    step="0.05"
-                    name="similarityThresholdUpdate"
-                    value={editedSettings.similarityThresholdUpdate}
-                    onChange={handleSettingsChange}
-                    className="w-full bg-white/20 border border-purple-400/30 rounded-lg p-2 text-white font-bold text-xl"
-                    min="0"
-                    max="1"
-                  />
-                </div>
-                <div className="bg-white/10 p-4 rounded-lg shadow-inner hover:bg-white/15 transition-colors">
-                  <label className="block text-sm font-medium text-purple-200 mb-1">
-                    Analyze Threshold
-                  </label>
-                  <input
-                    type="number"
-                    step="0.05"
-                    name="similarityThresholdAnalyze"
-                    value={editedSettings.similarityThresholdAnalyze}
-                    onChange={handleSettingsChange}
-                    className="w-full bg-white/20 border border-purple-400/30 rounded-lg p-2 text-white font-bold text-xl"
-                    min="0"
-                    max="1"
-                  />
-                </div>
+
+              {/* Tab Navigation */}
+              <div className="flex gap-2 mb-6">
+                <button
+                  onClick={() => setActiveTab('general')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    activeTab === 'general'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-white/10 text-purple-200 hover:bg-white/20'
+                  }`}
+                >
+                  General
+                </button>
+                <button
+                  onClick={() => setActiveTab('advanced')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    activeTab === 'advanced'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-white/10 text-purple-200 hover:bg-white/20'
+                  }`}
+                >
+                  Advanced
+                </button>
+                {isCreator && (
+                  <button
+                    onClick={() => setActiveTab('danger')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      activeTab === 'danger'
+                        ? 'bg-red-600 text-white'
+                        : 'bg-white/10 text-red-200 hover:bg-white/20'
+                    }`}
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
 
-              {/* Save Settings Button */}
-              {saveError && (
-                <div className="mb-4 bg-red-500/20 border border-red-500 p-3 rounded-lg text-red-200">
-                  {saveError}
-                </div>
-              )}
-              <button
-                onClick={handleSaveSettings}
-                disabled={isSaving}
-                className="w-full mb-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 text-white font-bold rounded-lg shadow-lg transition-all hover:shadow-purple-500/30"
-              >
-                {isSaving ? 'Saving...' : 'Save Changes'}
-              </button>
-
-              {/* Delete Lobby Section */}
-              <div className="mt-8 pt-6 border-t border-purple-400/30">
-                <h4 className="text-xl font-bold text-white mb-4">Delete Lobby</h4>
-                <div className="bg-red-900/20 p-4 rounded-lg border border-red-500/30">
-                  <input
-                    type="password"
-                    placeholder="Enter password to delete lobby"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full mb-3 p-3 bg-black/30 border border-red-500/40 rounded-lg text-white"
-                  />
-                  {deleteError && (
-                    <div className="mb-3 text-red-300 text-sm">
-                      {deleteError}
+              {/* Tab Content */}
+              <div className="space-y-4">
+                {/* General Settings Tab */}
+                {activeTab === 'general' && (
+                  <div className="space-y-4">
+                    <div className="bg-white/10 p-4 rounded-lg">
+                      <h4 className="text-lg font-semibold text-white mb-2">Lobby Information</h4>
+                      <div className="space-y-2">
+                        <p className="text-purple-200">
+                          <span className="font-medium">Name:</span> {lobbyDetails.lobby_name}
+                        </p>
+                        <p className="text-purple-200">
+                          <span className="font-medium">Created by:</span> {lobbyDetails.created_by}
+                        </p>
+                        {lobbyDetails.description && (
+                          <p className="text-purple-200">
+                            <span className="font-medium">Description:</span> {lobbyDetails.description}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  )}
-                  <button
-                    onClick={handleDelete}
-                    className="w-full py-3 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white font-bold rounded-lg shadow-lg transition-all hover:shadow-red-500/30 flex items-center justify-center"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Delete Lobby
-                  </button>
-                </div>
+                  </div>
+                )}
+
+                {/* Advanced Settings Tab */}
+                {activeTab === 'advanced' && (
+                  <div className="space-y-4">
+                    <div className="bg-white/10 p-4 rounded-lg">
+                      <h4 className="text-lg font-semibold text-white mb-4">Concept Settings</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-purple-200 mb-1">
+                            Student Concepts
+                          </label>
+                          <input
+                            type="number"
+                            name="numConceptsStudent"
+                            value={editedSettings.numConceptsStudent}
+                            onChange={handleSettingsChange}
+                            disabled={!isCreator}
+                            className={`w-full bg-white/20 border border-purple-400/30 rounded-lg p-2 text-white font-bold ${
+                              !isCreator ? 'opacity-70 cursor-not-allowed' : ''
+                            }`}
+                            min="1"
+                            max="50"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-purple-200 mb-1">
+                            Class Concepts
+                          </label>
+                          <input
+                            type="number"
+                            name="numConceptsClass"
+                            value={editedSettings.numConceptsClass}
+                            onChange={handleSettingsChange}
+                            disabled={!isCreator}
+                            className={`w-full bg-white/20 border border-purple-400/30 rounded-lg p-2 text-white font-bold ${
+                              !isCreator ? 'opacity-70 cursor-not-allowed' : ''
+                            }`}
+                            min="1"
+                            max="50"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white/10 p-4 rounded-lg">
+                      <h4 className="text-lg font-semibold text-white mb-4">Similarity Thresholds</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-purple-200 mb-1">
+                            Update Threshold
+                          </label>
+                          <input
+                            type="number"
+                            step="0.05"
+                            name="similarityThresholdUpdate"
+                            value={editedSettings.similarityThresholdUpdate}
+                            onChange={handleSettingsChange}
+                            disabled={!isCreator}
+                            className={`w-full bg-white/20 border border-purple-400/30 rounded-lg p-2 text-white font-bold ${
+                              !isCreator ? 'opacity-70 cursor-not-allowed' : ''
+                            }`}
+                            min="0"
+                            max="1"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-purple-200 mb-1">
+                            Analyze Threshold
+                          </label>
+                          <input
+                            type="number"
+                            step="0.05"
+                            name="similarityThresholdAnalyze"
+                            value={editedSettings.similarityThresholdAnalyze}
+                            onChange={handleSettingsChange}
+                            disabled={!isCreator}
+                            className={`w-full bg-white/20 border border-purple-400/30 rounded-lg p-2 text-white font-bold ${
+                              !isCreator ? 'opacity-70 cursor-not-allowed' : ''
+                            }`}
+                            min="0"
+                            max="1"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {isCreator && (
+                      <button
+                        onClick={handleSaveSettings}
+                        disabled={isSaving}
+                        className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 text-white font-bold rounded-lg shadow-lg transition-all hover:shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSaving ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Saving...
+                          </div>
+                        ) : 'Save Changes'}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Danger Zone Tab */}
+                {activeTab === 'danger' && isCreator && (
+                  <div className="space-y-4">
+                    <div className="bg-red-900/20 p-4 rounded-lg border border-red-500/30">
+                      <h4 className="text-lg font-semibold text-white mb-4">Delete Lobby</h4>
+                      <p className="text-red-200 text-sm mb-4">
+                        This action cannot be undone. All notes and data associated with this lobby will be permanently deleted.
+                      </p>
+                      <input
+                        type="password"
+                        placeholder="Enter password to delete lobby"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full mb-3 p-3 bg-black/30 border border-red-500/40 rounded-lg text-white"
+                      />
+                      {deleteError && (
+                        <div className="mb-3 text-red-300 text-sm">
+                          {deleteError}
+                        </div>
+                      )}
+                      <button
+                        onClick={handleDelete}
+                        className="w-full py-3 bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white font-bold rounded-lg shadow-lg transition-all hover:shadow-red-500/30 flex items-center justify-center"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Delete Lobby
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         )}
 
         <div className="text-center mt-12">
-          <Link
-            to="/"
-            className="inline-block bg-gradient-to-r from-pink-500 to-purple-600 hover:from-purple-600 hover:to-pink-500 text-white font-semibold px-6 py-3 rounded-full shadow-lg hover:shadow-pink-400/40 transition transform hover:scale-105"
-          >
-            ⬅ Back to Home
-          </Link>
         </div>
       </div>
     </LobbyLayout>
