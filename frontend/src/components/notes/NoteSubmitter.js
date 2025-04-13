@@ -100,43 +100,57 @@ function NoteSubmitter({ lobbyId, advancedSettings }) {
       }
 
       // Optionally increment the lobby's user count
-      await fetch(`${API_BASE_URL}/lobby/lobbies/${lobbyId}/increment-user-count`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-      });
+      // Optionally increment the lobby's user count
+await fetch(`${API_BASE_URL}/lobby/lobbies/${lobbyId}/increment-user-count`, {
+  method: 'PUT',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  },
+});
 
-      // Run update_student_concepts with student-specific settings
-      await fetch(`${API_BASE_URL}/notes/update-student-concepts`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          user_id: username,
-          class_id: lobbyId,
-          num_concepts: advancedSettings.numConceptsStudent,
-          similarity_threshold: advancedSettings.similarityThresholdUpdate,
-        }),
-      });
+// Run update_student_concepts with student-specific settings
+try {
+  const updatePayload = {
+    user_id: username,
+    class_id: lobbyId,
+    num_concepts: advancedSettings.numConceptsStudent,
+    similarity_threshold: advancedSettings.similarityThresholdUpdate,
+  };
+  console.log("Attempting to update student concepts with payload:", updatePayload);
 
-      // Run analyze_concepts_enhanced with class-specific settings
-      const analyzeResponse = await fetch(
-        `${API_BASE_URL}/notes/analyze-concepts-enhanced?user_id=${username}&class_id=${lobbyId}` +
-          `&num_concepts=${advancedSettings.numConceptsClass}` +
-          `&similarity_threshold=${advancedSettings.similarityThresholdUpdate}` +
-          `&sim_threshold=${advancedSettings.similarityThresholdAnalyze}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
+  const updateResponse = await fetch(`${API_BASE_URL}/notes/update-student-concepts`, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(updatePayload),
+  });
+
+  console.log("Update student concepts response status:", updateResponse.status);
+
+  const updateResult = await updateResponse.json();
+  console.log("Update student concepts response data:", updateResult);
+} catch (error) {
+  console.error("Error updating student concepts:", error);
+}
+
+// Run analyze_concepts_enhanced with class-specific settings
+const analyzeResponse = await fetch(
+  `${API_BASE_URL}/notes/analyze-concepts-enhanced?user_id=${username}&class_id=${lobbyId}` +
+    `&num_concepts=${advancedSettings.numConceptsClass}` +
+    `&similarity_threshold=${advancedSettings.similarityThresholdUpdate}` +
+    `&sim_threshold=${advancedSettings.similarityThresholdAnalyze}`,
+  {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  }
+);
+
 
       let analyzeResult = {};
       try {
