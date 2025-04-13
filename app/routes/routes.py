@@ -39,7 +39,7 @@ router = APIRouter()
 @router.post("/submit-note")
 async def submit_note(
     user_id: str = Form(...),
-    content: str = Form(...),
+    content: str = Form(""),  # Make content optional with default empty string
     class_id: str = Form(...),
     pdf_file: Optional[UploadFile] = File(None),
     db_client: AsyncIOMotorClient = Depends(get_database_client)
@@ -49,13 +49,16 @@ async def submit_note(
         pdf_bytes = await pdf_file.read()
         reader = PyPDF2.PdfReader(io.BytesIO(pdf_bytes))
         extracted_text = ""
+
         for page in reader.pages:
             page_text = page.extract_text()
             if page_text:
                 extracted_text += page_text + "\n"
         # Clean up the extracted text:
+        print("Extracted text: ", extracted_text)
         # This replaces multiple whitespace characters (including newlines) with a single space.
         note_content = re.sub(r'\s+', ' ', extracted_text).strip()
+
     else:
         note_content = content
 
