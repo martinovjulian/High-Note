@@ -10,6 +10,7 @@ from fastapi import HTTPException
 import os
 from typing import Dict, Any, List
 import json
+from dotenv import load_dotenv
 
 # Configure Gemini API
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -373,4 +374,254 @@ async def get_student_notes(
         return {
             "notes": [note["content"] for note in notes if "content" in note]
         }
+
+@router.get("/test-gemini")
+async def test_gemini():
+    """
+    Test the Gemini API connection by generating a simple response.
+    """
+    if not GEMINI_API_KEY:
+        return {"status": "error", "message": "Gemini API key not configured"}
+    
+    try:
+        gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+        response = gemini_model.generate_content("Say hello and confirm you're working correctly!")
+        return {
+            "status": "success", 
+            "message": "Gemini API connection successful", 
+            "response": response.text
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@router.get("/detailed-note-analysis")
+async def detailed_note_analysis(
+    user_id: str,
+    class_id: str,
+    db_client: AsyncIOMotorClient = Depends(get_database_client)
+):
+    """
+    Provide detailed analysis of a student's notes compared to class notes using Gemini.
+    This analyzes the raw note content in addition to extracted concepts.
+    """
+    # Debug information
+    print(f"Starting detailed note analysis for user {user_id} in class {class_id}")
+    
+    # Get API key directly from environment (don't rely on module variable)
+    import os
+    
+    # Explicitly load environment variables
+    load_dotenv()
+    
+    # Get the API key
+    api_key = os.environ.get('GEMINI_API_KEY')
+    print(f"API key loaded directly: {bool(api_key)}")
+    print(f"API key length: {len(api_key) if api_key else 0}")
+    
+    if not api_key:
+        raise HTTPException(
+            status_code=400, 
+            detail="Gemini API key not configured. Please add GEMINI_API_KEY to your environment variables."
+        )
+    
+    try:
+        async with db_client as client:
+            db = client.notes_db
+            
+            # Get the student's notes
+            student_notes = await db.notes.find({
+                "user_id": user_id, 
+                "class_id": class_id
+            }).to_list(length=None)
+            
+            if not student_notes:
+                raise HTTPException(status_code=404, detail="No notes found for this student in this class.")
+            
+            # Get other students' notes for comparison
+            other_students_notes = await db.notes.find({
+                "class_id": class_id,
+                "user_id": {"$ne": user_id}
+            }).to_list(length=None)
+            
+            if not other_students_notes:
+                # Instead of failing, just use an empty comparison base
+                print("No other students' notes found for comparison. Proceeding with analysis of just this student's notes.")
+                other_students_notes = []
+            
+            # Extract student's note content
+            student_content = " ".join([note["content"] for note in student_notes if "content" in note])
+            print(f"Student content length: {len(student_content)}")
+            
+            # Extract other students' note content (if any)
+            other_content = " ".join([note["content"] for note in other_students_notes if "content" in note])
+            print(f"Other students' content length: {len(other_content)}")
+            
+            # Get extracted concepts for additional context
+            student_concepts_doc = await db.student_concepts.find_one({"user_id": user_id, "class_id": class_id})
+            student_concepts = student_concepts_doc.get("concepts", []) if student_concepts_doc else []
+            print(f"Student concepts: {student_concepts}")
+            
+            # Create a condensed version of notes for analysis (to fit token limits)
+            student_content_condensed = student_content[:3000] if len(student_content) > 3000 else student_content
+            other_content_condensed = other_content[:3000] if len(other_content) > 3000 else other_content
+            
+            try:
+                print("Initializing Gemini model...")
+                # Use the directly loaded API key to configure Gemini
+                genai.configure(api_key=api_key)
+                gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+                
+                # Create a simpler prompt for Gemini analysis if there are other students' notes
+                if other_students_notes:
+                    prompt = f"""
+                    As an educational assistant, analyze these student notes and provide feedback:
+                    
+                    STUDENT'S NOTES:
+                    {student_content_condensed}
+                    
+                    NOTES FROM OTHER STUDENTS (FOR REFERENCE):
+                    {other_content_condensed}
+                    
+                    EXTRACTED KEY CONCEPTS FROM STUDENT'S NOTES:
+                    {', '.join(student_concepts)}
+                    
+                    Please analyze the notes and provide a JSON response with the following structure:
+                    {{
+                        "topicCoverage": [List of main topics covered in the notes],
+                        "missingTopics": [Important topics covered by others but missing from the student's notes],
+                        "qualityAssessment": [Brief assessment of note quality, organization, and completeness],
+                        "strengthsAndWeaknesses": {{
+                            "strengths": [List of 2-3 strengths in the student's notes],
+                            "weaknesses": [List of 2-3 areas for improvement]
+                        }},
+                        "studyRecommendations": [2-3 specific recommendations to improve understanding]
+                    }}
+                    
+                    Ensure your analysis is constructive, specific, and educational.
+                    """
+                else:
+                    # If no other students' notes, provide a standalone analysis
+                    prompt = f"""
+                    As an educational assistant, analyze these student notes and provide feedback:
+                    
+                    STUDENT'S NOTES:
+                    {student_content_condensed}
+                    
+                    EXTRACTED KEY CONCEPTS FROM STUDENT'S NOTES:
+                    {', '.join(student_concepts)}
+                    
+                    Please analyze the notes and provide a JSON response with the following structure:
+                    {{
+                        "topicCoverage": [List of main topics covered in the notes],
+                        "qualityAssessment": [Brief assessment of note quality, organization, and completeness],
+                        "strengthsAndWeaknesses": {{
+                            "strengths": [List of 2-3 strengths in the student's notes],
+                            "weaknesses": [List of 2-3 areas for improvement]
+                        }},
+                        "studyRecommendations": [2-3 specific recommendations to improve understanding]
+                    }}
+                    
+                    Ensure your analysis is constructive, specific, and educational.
+                    """
+                
+                print("Sending prompt to Gemini API...")
+                print(f"Prompt length: {len(prompt)}")
+                
+                # Get Gemini's response
+                response = gemini_model.generate_content(prompt)
+                print(f"Received response from Gemini API: {response.text[:100]}...")
+                
+                try:
+                    # Parse the JSON response
+                    analysis = json.loads(response.text)
+                    return {
+                        "status": "success",
+                        "student_id": user_id,
+                        "class_id": class_id,
+                        "analysis": analysis
+                    }
+                except json.JSONDecodeError as json_err:
+                    print(f"JSON parsing error: {json_err}")
+                    print(f"Raw response: {response.text}")
+                    
+                    # Try to extract a valid JSON object from the response
+                    import re
+                    match = re.search(r'(\{.*\})', response.text, re.DOTALL)
+                    if match:
+                        try:
+                            json_str = match.group(1)
+                            analysis = json.loads(json_str)
+                            return {
+                                "status": "success",
+                                "student_id": user_id,
+                                "class_id": class_id,
+                                "analysis": analysis
+                            }
+                        except:
+                            pass
+                    
+                    # If JSON parsing fails, return both the raw text and a basic analysis
+                    return {
+                        "status": "partial_success",
+                        "student_id": user_id,
+                        "class_id": class_id,
+                        "raw_analysis": response.text,
+                        "basic_analysis": {
+                            "topicCoverage": student_concepts,
+                            "qualityAssessment": "Analysis not available - please check raw_analysis field",
+                            "strengthsAndWeaknesses": {
+                                "strengths": [],
+                                "weaknesses": []
+                            },
+                            "studyRecommendations": []
+                        },
+                        "error": "Failed to parse response as JSON"
+                    }
+                    
+            except Exception as gemini_err:
+                print(f"Gemini API error: {gemini_err}")
+                return {
+                    "status": "error",
+                    "message": str(gemini_err),
+                    "details": "Error occurred while processing Gemini API request"
+                }
+    except Exception as general_err:
+        print(f"General error in detailed_note_analysis: {general_err}")
+        return {
+            "status": "error",
+            "message": str(general_err),
+            "details": "Error occurred while processing the analysis request"
+        }
+
+@router.get("/check-environment")
+async def check_environment():
+    """
+    Check the environment variables and debug information.
+    """
+    import sys
+    import os
+    from dotenv import load_dotenv
+    
+    # Reload the environment variables to be sure
+    load_dotenv()
+    
+    # Get API key
+    api_key = os.environ.get('GEMINI_API_KEY')
+    
+    # Check if module is loaded
+    gemini_loaded = 'google.generativeai' in sys.modules
+    
+    # Check the router-level API key variable
+    router_api_key = GEMINI_API_KEY
+    
+    return {
+        "env_api_key_exists": bool(api_key),
+        "env_api_key_length": len(api_key) if api_key else 0,
+        "router_api_key_exists": bool(router_api_key),
+        "router_api_key_length": len(router_api_key) if router_api_key else 0,
+        "gemini_module_loaded": gemini_loaded,
+        "python_version": sys.version,
+        "working_directory": os.getcwd(),
+        "env_file_exists": os.path.exists('.env'),
+    }
 
