@@ -155,26 +155,16 @@ const Hub = () => {
                       <div className="grid grid-cols-2 gap-4 pt-4 border-t border-purple-100">
                         <div className="flex items-center space-x-2">
                           <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center border border-purple-200">
-                            <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500">Members</p>
-                            <p className="text-sm font-medium text-purple-700">{lobby.user_count || 0}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center border border-purple-200">
-                            <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                             </svg>
                           </div>
                           <div>
-                            <p className="text-xs text-gray-500">Notes</p>
-                            <p className="text-sm font-medium text-purple-700">{lobby.notes_count || 0}</p>
+                          <p className="text-xs text-gray-500">Notes</p>
+                            <p className="text-sm font-medium text-purple-700">{lobby.user_count || 0}</p>
                           </div>
                         </div>
+                       
                       </div>
 
                       {/* Join Button */}
