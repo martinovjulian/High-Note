@@ -5,12 +5,10 @@ import { useAuth } from '../../context/AuthContext';
 const API_BASE_URL = 'http://localhost:8000';
 
 function NoteSubmitter({ lobbyId }) {
-  const { username, token } = useAuth(); // Get the authentication token
+  const { username, token } = useAuth();
   const [content, setContent] = useState('');
-  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [noteSubmitted, setNoteSubmitted] = useState(false);
 
   const navigate = useNavigate();
 
@@ -18,7 +16,6 @@ function NoteSubmitter({ lobbyId }) {
     event.preventDefault();
     setIsLoading(true);
     setError('');
-    setMessage('');
 
     const requestBody = {
       user_id: username,
@@ -33,63 +30,93 @@ function NoteSubmitter({ lobbyId }) {
     }
 
     try {
-      // Include Authorization header with the token
-      const response = await fetch(`${API_BASE_URL}/notes/submit-note`, {
+      // 1. Submit the note
+      const submitResponse = await fetch(`${API_BASE_URL}/notes/submit-note`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // Add authentication token
+          'Authorization': `Bearer ${token}` 
         },
         body: JSON.stringify(requestBody),
       });
 
-      let result = {};
+      let submitResult = {};
       try {
-        result = await response.json();
+        submitResult = await submitResponse.json();
       } catch (parseError) {
         console.error("Could not parse response JSON:", parseError);
-        if (response.ok) {
-          setMessage('Note submitted (but response format was unexpected).');
-          setContent('');
-          return;
+        if (submitResponse.ok) {
+          // If successful but unparseable, continue anyway.
+          submitResult = {};
+        } else {
+          throw new Error(`HTTP error! Status: ${submitResponse.status}. Response not valid JSON.`);
         }
-        throw new Error(`HTTP error! Status: ${response.status}. Response not valid JSON.`);
       }
 
-      if (!response.ok) {
-        let errorDetail = `HTTP error! Status: ${response.status}`;
-        if (result && result.detail) {
-          if (typeof result.detail === 'string') {
-            errorDetail = result.detail;
-          } else if (Array.isArray(result.detail)) {
-            errorDetail = result.detail
+      if (!submitResponse.ok) {
+        let errorDetail = `HTTP error! Status: ${submitResponse.status}`;
+        if (submitResult && submitResult.detail) {
+          if (typeof submitResult.detail === 'string') {
+            errorDetail = submitResult.detail;
+          } else if (Array.isArray(submitResult.detail)) {
+            errorDetail = submitResult.detail
               .map(err => `${err.loc ? err.loc.join('.') : 'error'}: ${err.msg}`)
               .join('; ');
           } else {
-            errorDetail = JSON.stringify(result.detail);
+            errorDetail = JSON.stringify(submitResult.detail);
           }
         }
         throw new Error(errorDetail);
       }
 
-      setMessage(`✅ Note submitted! ID: ${result.id}`);
-      setContent('');
-      setNoteSubmitted(true);
-
-      // Also include the Authorization header in this request
-      const incrementResponse = await fetch(`${API_BASE_URL}/lobby/lobbies/${lobbyId}/increment-user-count`, {
+      // Optionally, increment the lobby's user count
+      await fetch(`${API_BASE_URL}/lobby/lobbies/${lobbyId}/increment-user-count`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // Add authentication token
+          'Authorization': `Bearer ${token}` 
         },
       });
 
-      if (!incrementResponse.ok) {
-        const incrementError = await incrementResponse.json();
-        console.error('Increment user count failed:', incrementError);
-        setError('Note submitted, but failed to increment user count.');
+      // 2. Run update_student_concepts endpoint
+      await fetch(`${API_BASE_URL}/notes/update-student-concepts`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({
+          user_id: username,
+          class_id: lobbyId,
+          num_concepts: 5, // adjust as needed
+        }),
+      });
+
+      // 3. Run analyze_concepts_enhanced only if another student's note exists:
+      // This endpoint returns various concept lists including missing_concepts.
+      const analyzeResponse = await fetch(
+        `${API_BASE_URL}/notes/analyze-concepts-enhanced?user_id=${username}&class_id=${lobbyId}&num_concepts=10`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+      let analyzeResult = {};
+      try {
+        analyzeResult = await analyzeResponse.json();
+      } catch (parseError) {
+        console.error("Error parsing analyze response:", parseError);
+        analyzeResult = {};
       }
+
+      // Redirect to Analysis page passing the missing concepts if they exist.
+      navigate(
+        `/analysis?classId=${lobbyId}&userId=${username}`,
+        { state: { missingConcepts: analyzeResult.missing_concepts || [] } }
+      );
     } catch (err) {
       console.error("Submission failed:", err);
       setError(err.message || 'Failed to submit note.');
@@ -102,7 +129,7 @@ function NoteSubmitter({ lobbyId }) {
     <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur-xl rounded-xl p-8 border border-white/20 shadow-2xl mt-10 animate-fadeIn text-white">
       <h2 className="text-3xl font-bold mb-2 text-purple-200">📝 Submit a New Note</h2>
       <p className="text-sm text-white/80 mb-6">
-        Fill in the details and hit submit. Results will be shown below.
+        Fill in the details and hit submit. You will be redirected to view your analysis.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -141,12 +168,6 @@ function NoteSubmitter({ lobbyId }) {
           />
         </div>
 
-        {message && (
-          <div className="bg-green-600/20 text-green-300 border border-green-500 px-4 py-2 rounded-lg text-sm font-medium">
-            {message}
-          </div>
-        )}
-
         {error && (
           <div className="bg-red-600/20 text-red-300 border border-red-500 px-4 py-2 rounded-lg text-sm font-medium">
             {error}
@@ -162,18 +183,9 @@ function NoteSubmitter({ lobbyId }) {
               : 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:scale-105 hover:shadow-lg hover:shadow-indigo-500/40'
           }`}
         >
-          {isLoading ? 'Submitting...' : '🚀 Submit Note'}
+          {isLoading ? 'Submitting...' : '🚀 Submit & Analyze'}
         </button>
       </form>
-
-      {noteSubmitted && (
-        <button
-          onClick={() => navigate(`/analysis?classId=${lobbyId}&userId=${username}`)}
-          className="w-full py-3 font-bold rounded-lg text-white mt-4 transition duration-300 bg-gradient-to-r from-purple-500 to-indigo-600 hover:scale-105 hover:shadow-lg hover:shadow-indigo-500/40"
-        >
-          Analyze
-        </button>
-      )}
     </div>
   );
 }
