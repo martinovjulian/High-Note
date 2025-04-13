@@ -8,6 +8,13 @@ function CreateLobby({ onCreateLobby }) {
   const [showModal, setShowModal] = useState(false);
   // Added state for password
   const [password, setPassword] = useState('');
+  // Added state for advanced settings
+  const [advancedSettings, setAdvancedSettings] = useState({
+    numConceptsStudent: 10,
+    numConceptsClass: 15,
+    similarityThresholdUpdate: 0.75,
+    similarityThresholdAnalyze: 0.8,
+  });
 
   const handleDescriptionChange = (e) => {
     const input = e.target.value;
@@ -21,10 +28,21 @@ function CreateLobby({ onCreateLobby }) {
     setDescription(input);
   };
 
+  const handleSettingsChange = (e) => {
+    const { name, value } = e.target;
+    setAdvancedSettings((prev) => ({
+      ...prev,
+      [name]:
+        name.includes("numConcepts")
+          ? parseInt(value, 10)
+          : parseFloat(value),
+    }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (lobbyName.trim() && wordWarning === '') {
-      onCreateLobby(lobbyName, description, password); // Passing the password too
+      onCreateLobby(lobbyName, description, password, advancedSettings); // Passing advanced settings too
       setLobbyName('');
       setDescription('');
       setPassword(''); // Reset the password field
@@ -82,6 +100,63 @@ function CreateLobby({ onCreateLobby }) {
               {wordWarning && (
                 <p className="text-red-500 text-sm mb-2">{wordWarning}</p>
               )}
+
+              {/* Advanced Settings Section */}
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold mb-2 text-purple-700">Advanced Settings</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Student Concepts Count
+                    </label>
+                    <input
+                      type="number"
+                      name="numConceptsStudent"
+                      value={advancedSettings.numConceptsStudent}
+                      onChange={handleSettingsChange}
+                      className="mt-1 block w-full rounded-md p-2 border-2 border-purple-300 text-gray-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Class Concepts Count
+                    </label>
+                    <input
+                      type="number"
+                      name="numConceptsClass"
+                      value={advancedSettings.numConceptsClass}
+                      onChange={handleSettingsChange}
+                      className="mt-1 block w-full rounded-md p-2 border-2 border-purple-300 text-gray-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Update Threshold
+                    </label>
+                    <input
+                      type="number"
+                      step="0.05"
+                      name="similarityThresholdUpdate"
+                      value={advancedSettings.similarityThresholdUpdate}
+                      onChange={handleSettingsChange}
+                      className="mt-1 block w-full rounded-md p-2 border-2 border-purple-300 text-gray-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Analyze Threshold
+                    </label>
+                    <input
+                      type="number"
+                      step="0.05"
+                      name="similarityThresholdAnalyze"
+                      value={advancedSettings.similarityThresholdAnalyze}
+                      onChange={handleSettingsChange}
+                      className="mt-1 block w-full rounded-md p-2 border-2 border-purple-300 text-gray-800"
+                    />
+                  </div>
+                </div>
+              </div>
 
               <div className="flex justify-end space-x-4 mt-4">
                 <button
