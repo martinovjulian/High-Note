@@ -166,7 +166,7 @@ function AppContent() {
               value={enteredPassword}
               onChange={(e) => setEnteredPassword(e.target.value)}
               placeholder="Password"
-              className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
             />
             <div className="flex justify-end">
               <button 
