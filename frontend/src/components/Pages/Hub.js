@@ -134,7 +134,7 @@ const Hub = () => {
                     className="cursor-pointer relative group transform transition duration-500 hover:scale-[1.03] animate-float"
                   >
                     <div className="bg-gradient-to-br from-white to-purple-50 rounded-2xl p-6 shadow-xl backdrop-blur-md border border-purple-100 transition-all duration-300 hover:border-purple-300 hover:shadow-2xl">
-                      {/* Lobby Header */}
+                      {/* Loby Header */}
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center space-x-3">
                           <h3 className="text-2xl font-bold tracking-wide text-purple-900">{lobby.lobby_name}</h3>
