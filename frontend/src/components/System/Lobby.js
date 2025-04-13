@@ -1,21 +1,22 @@
 // src/components/System/Lobby.js
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import NoteSubmitter from '../notes/NoteSubmitter';
 import axios from 'axios';
 import LobbyLayout from './LobbyLayout';
+import NoteSubmitter from '../notes/NoteSubmitter';
 import { useAuth } from '../../context/AuthContext';
 
 function Lobby() {
   const { lobbyId } = useParams();
   const [lobbyDetails, setLobbyDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
   const [password, setPassword] = useState('');
   const [deleteError, setDeleteError] = useState('');
-  const navigate = useNavigate();
   const { token } = useAuth();
+  const navigate = useNavigate();
 
-  // Advanced settings with separate concept counts for student and class,
-  // plus thresholds.
+  // Advanced settings with separate concept counts for student and class, plus thresholds.
   const [advancedSettings, setAdvancedSettings] = useState({
     numConceptsStudent: 10,
     numConceptsClass: 15,
@@ -35,18 +36,27 @@ function Lobby() {
   };
 
   useEffect(() => {
+    // Reset states on lobbyId or token change.
     setLobbyDetails(null);
+    setErrorMessage('');
+    setLoading(true);
+
     axios
       .get(`http://localhost:8000/lobby/lobbies/${lobbyId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((response) => {
-        console.log("Lobby details:", response.data);
+        console.log("Lobby details fetched:", response.data);
         setLobbyDetails(response.data);
       })
       .catch((error) => {
         console.error("Failed to fetch lobby details:", error);
-        setLobbyDetails({ lobby_name: "Error loading lobby" });
+        setErrorMessage(
+          error.response?.data?.detail || 'Error loading lobby details'
+        );
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, [lobbyId, token]);
 
@@ -66,16 +76,28 @@ function Lobby() {
     <LobbyLayout>
       <div className="min-h-screen px-6 pt-12 pb-24 bg-gradient-to-br from-indigo-900 via-purple-800 to-fuchsia-900 text-white animate-fadeIn">
         <div className="max-w-4xl mx-auto text-center mb-12">
-          <h2 className="text-4xl font-extrabold tracking-wide text-white drop-shadow-lg mb-2">
-            {lobbyDetails?.lobby_name || 'Loading...'}
-          </h2>
+          {loading ? (
+            <h2 className="text-4xl font-extrabold tracking-wide text-white drop-shadow-lg mb-2">
+              Loading...
+            </h2>
+          ) : errorMessage ? (
+            <h2 className="text-4xl font-extrabold tracking-wide text-red-400 drop-shadow-lg mb-2">
+              {errorMessage}
+            </h2>
+          ) : (
+            <h2 className="text-4xl font-extrabold tracking-wide text-white drop-shadow-lg mb-2">
+              {lobbyDetails.lobby_name}
+            </h2>
+          )}
           <p className="text-purple-200 text-sm font-medium">
-            {'Welcome to your personal note-taking lounge ✨'}
+            Welcome to your personal note-taking lounge ✨
           </p>
         </div>
 
-        {/* Pass advanced settings as a prop to NoteSubmitter */}
-        <NoteSubmitter lobbyId={lobbyId} advancedSettings={advancedSettings} />
+        {/* Render NoteSubmitter only if data loads without error */}
+        {!loading && !errorMessage && (
+          <NoteSubmitter lobbyId={lobbyId} advancedSettings={advancedSettings} />
+        )}
 
         {/* Advanced Settings Section */}
         <div className="mt-10 bg-white/20 p-4 rounded-xl">
@@ -134,7 +156,7 @@ function Lobby() {
           </div>
         </div>
 
-        {/* Existing deletion functionality */}
+        {/* Lobby Deletion */}
         <div className="mt-10">
           <input
             type="password"
