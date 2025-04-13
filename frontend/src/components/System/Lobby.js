@@ -9,11 +9,12 @@ import { useAuth } from '../../context/AuthContext';
 function Lobby() {
   const { lobbyId } = useParams();
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { token, username } = useAuth();
 
   const [lobbyDetails, setLobbyDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isCreator, setIsCreator] = useState(false);
 
   // States for Settings Modal
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -43,6 +44,8 @@ function Lobby() {
       })
       .then((response) => {
         setLobbyDetails(response.data);
+        // Check if current user is the creator
+        setIsCreator(response.data.created_by === username);
         // Initialize the settings to the advanced_settings if available.
         if (response.data?.advanced_settings) {
           setEditedSettings({ ...response.data.advanced_settings });
@@ -57,7 +60,7 @@ function Lobby() {
       .finally(() => {
         setLoading(false);
       });
-  }, [lobbyId, token]);
+  }, [lobbyId, token, username]);
 
   const handleSettingsClick = () => {
     // Reset edited settings to current lobby details (if any) when opening the modal
@@ -131,20 +134,22 @@ function Lobby() {
     <LobbyLayout>
       <div className="min-h-screen px-6 pt-12 pb-24 bg-gradient-to-br from-indigo-900 via-purple-800 to-fuchsia-900 text-white animate-fadeIn">
         <div className="max-w-4xl mx-auto relative">
-          {/* Header with Settings Icon */}
-          <div className="absolute -top-4 -right-4 z-10">
-            <button 
-              onClick={handleSettingsClick}
-              className="bg-white/40 p-4 rounded-xl hover:bg-white/60 active:bg-purple-500/60 transition-all duration-200 shadow-xl hover:shadow-purple-500/40 w-16 h-16 flex items-center justify-center border-2 border-white/30"
-              title="Lobby Settings"
-              aria-label="Open Settings Menu"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c-.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </button>
-          </div>
+          {/* Header with Settings Icon - Only show for creator */}
+          {isCreator && (
+            <div className="absolute -top-4 -right-4 z-10">
+              <button 
+                onClick={handleSettingsClick}
+                className="bg-white/40 p-4 rounded-xl hover:bg-white/60 active:bg-purple-500/60 transition-all duration-200 shadow-xl hover:shadow-purple-500/40 w-16 h-16 flex items-center justify-center border-2 border-white/30"
+                title="Lobby Settings"
+                aria-label="Open Settings Menu"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c-.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
+            </div>
+          )}
           
           <div className="text-center mb-12">
             {loading ? (
@@ -156,9 +161,16 @@ function Lobby() {
                 {errorMessage}
               </h2>
             ) : (
-              <h2 className="text-4xl font-extrabold tracking-wide text-white drop-shadow-lg mb-2">
-                {lobbyDetails.lobby_name}
-              </h2>
+              <>
+                <h2 className="text-4xl font-extrabold tracking-wide text-white drop-shadow-lg mb-2">
+                  {lobbyDetails.lobby_name}
+                </h2>
+                {lobbyDetails.created_by && (
+                  <p className="text-purple-300 text-xs font-medium mb-1">
+                    Created by: {lobbyDetails.created_by} {isCreator && <span className="bg-purple-500/30 px-2 py-0.5 rounded-full text-[10px] ml-1">You</span>}
+                  </p>
+                )}
+              </>
             )}
             <p className="text-purple-200 text-sm font-medium">
               Welcome to your personal note-taking lounge ✨
@@ -174,8 +186,8 @@ function Lobby() {
           />
         )}
 
-        {/* Settings Modal */}
-        {showSettingsModal && lobbyDetails && editedSettings && (
+        {/* Settings Modal - Only shown if user is creator AND modal is open */}
+        {showSettingsModal && isCreator && lobbyDetails && editedSettings && (
           <div
             className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] backdrop-blur-sm animate-fadeIn"
             onClick={() => setShowSettingsModal(false)}
