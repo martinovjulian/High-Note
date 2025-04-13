@@ -57,10 +57,11 @@ async def create_lobby(
 
         return {"message": "Lobby created successfully", "lobby_id": str(result.inserted_id)}
 
-# New endpoint: Get lobby by ID (includes password for join verification)
+# Get lobby by ID endpoint with enhanced security
 @router.get("/lobbies/{lobby_id}")
 async def get_lobby_by_id(
     lobby_id: str,
+    current_user: User = Depends(get_current_user),
     db_client: AsyncIOMotorClient = Depends(get_database_client)
 ):
     async with get_database_client() as client:
@@ -68,12 +69,17 @@ async def get_lobby_by_id(
         lobby = await db.lobbies.find_one({"_id": ObjectId(lobby_id)})
         if not lobby:
             raise HTTPException(status_code=404, detail="Lobby not found")
-        return {
+            
+        # Check if the current user is the creator
+        is_creator = lobby.get("created_by") == current_user.username
+        
+        # Build response object
+        response = {
             "lobby_id": str(lobby["_id"]),
             "lobby_name": lobby.get("lobby_name", ""),
             "description": lobby.get("description", ""),
             "user_count": lobby.get("user_count", 0),
-            "password": lobby.get("password", None),  # NOTE: Exposing password is for testing only.
+            "created_by": lobby.get("created_by", ""),
             "advanced_settings": lobby.get("advanced_settings", {
                 "numConceptsStudent": 10,
                 "numConceptsClass": 15,
@@ -81,12 +87,19 @@ async def get_lobby_by_id(
                 "similarityThresholdAnalyze": 0.8,
             })
         }
+        
+        # Only include password if the user is the creator
+        if is_creator:
+            response["password"] = lobby.get("password", None)
+            
+        return response
 
 # Existing delete endpoint (still present; used elsewhere)
 @router.delete("/lobbies/{lobby_id}")
 async def delete_lobby(
     lobby_id: str,
     password: str = Body(..., embed=True),
+    current_user: User = Depends(get_current_user),
     db_client: AsyncIOMotorClient = Depends(get_database_client)
 ):
     async with get_database_client() as client:
@@ -95,6 +108,15 @@ async def delete_lobby(
 
         if not lobby:
             raise HTTPException(status_code=404, detail="Lobby not found")
+            
+        # Check if current user is the creator of the lobby
+        if lobby.get("created_by") != current_user.username:
+            raise HTTPException(
+                status_code=403, 
+                detail="Only the creator of the lobby can delete it"
+            )
+            
+        # Verify the lobby password
         if lobby.get("password") != password:
             raise HTTPException(status_code=403, detail="Incorrect password")
 
@@ -162,6 +184,13 @@ async def update_lobby_settings(
         lobby = await db.lobbies.find_one({"_id": ObjectId(lobby_id)})
         if not lobby:
             raise HTTPException(status_code=404, detail="Lobby not found")
+        
+        # Check if current user is the creator of the lobby
+        if lobby.get("created_by") != current_user.username:
+            raise HTTPException(
+                status_code=403, 
+                detail="Only the creator of the lobby can update settings"
+            )
         
         # Update only the advanced_settings field
         result = await db.lobbies.update_one(
