@@ -55,11 +55,7 @@ function NoteSubmitter({ lobbyId, advancedSettings }) {
     const formData = new FormData();
     formData.append("user_id", username);
     formData.append("class_id", lobbyId);
-    if (content) {
-      formData.append("content", content);
-    } else {
-      formData.append("content", ""); // Send empty string if no text content
-    }
+    formData.append("content", content || ""); // Always append content, even if empty
     if (pdfFile) {
       formData.append("pdf_file", pdfFile);
     }
@@ -148,6 +144,16 @@ function NoteSubmitter({ lobbyId, advancedSettings }) {
       } catch (parseError) {
         console.error("Error parsing analyze response:", parseError);
         analyzeResult = {};
+      }
+
+      if (analyzeResult.status === "insufficient_notes") {
+        // Show success message but don't redirect
+        alert(analyzeResult.message);
+        // Clear the form
+        setContent('');
+        setPdfFile(null);
+        setIsLoading(false);
+        return;
       }
 
       // Redirect to Analysis page passing the missing concepts via router state.

@@ -46,7 +46,7 @@ const Hub = () => {
         {
           lobby_name: lobbyName,
           description: description,
-          user_count: 1,
+          user_count: 0,
           password: password,
           advanced_settings: advancedSettings
         },
