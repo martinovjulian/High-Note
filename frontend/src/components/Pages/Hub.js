@@ -116,16 +116,16 @@ const Hub = () => {
                     <div className={`bg-gradient-to-br ${gradient} rounded-2xl p-6 shadow-2xl backdrop-blur-md bg-opacity-80 border border-white/20 transition-all duration-300`}>
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="text-2xl font-bold tracking-wide">{lobby.lobby_name}</h3>
-                        <span className="inline-flex items-center px-2 py-1 text-sm font-semibold bg-green-500 text-white rounded-full animate-pulse shadow">
+                        {/* <span className="inline-flex items-center px-2 py-1 text-sm font-semibold bg-green-500 text-white rounded-full animate-pulse shadow">
                           🟢 Online
-                        </span>
+                        </span> */}
                       </div>
                       <p className="text-sm text-white/90 mb-4">
                         {lobby.description || 'No description provided.'}
                       </p>
                       <div className="flex items-center gap-2 text-sm font-medium text-white/90">
                         <span className="text-lg">👥</span>
-                        <span>{lobby.user_count || 0} Active Users</span>
+                        <span>{lobby.user_count || 0} Notes Submitted</span>
                       </div>
                     </div>
                   </div>

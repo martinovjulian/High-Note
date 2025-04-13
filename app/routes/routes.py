@@ -258,13 +258,16 @@ async def analyze_concepts_enhanced(
         if not student_notes_docs:
             raise HTTPException(status_code=404, detail="No notes found for this student.")
     
+        # Get class size for dynamic threshold adjustment
+        class_size = len(other_notes_docs) + 1  # +1 for the current student
+    
         # Aggregate content
         aggregated_other_text = " ".join(doc["content"] for doc in other_notes_docs if "content" in doc)
         aggregated_student_text = " ".join(doc["content"] for doc in student_notes_docs if "content" in doc)
     
         # Use your existing RAKE function to extract concepts using positional arguments
-        other_concepts = extract_key_concepts(aggregated_other_text, num_concepts, similarity_threshold, similarity_method)
-        student_concepts = extract_key_concepts(aggregated_student_text, num_concepts, similarity_threshold, similarity_method)
+        other_concepts = extract_key_concepts(aggregated_other_text, num_concepts, similarity_threshold, similarity_method, class_size)
+        student_concepts = extract_key_concepts(aggregated_student_text, num_concepts, similarity_threshold, similarity_method, class_size)
     
         # Identify common concepts using semantic similarity
         common_concepts = find_common_concepts(student_concepts, other_concepts, sim_threshold=sim_threshold)
