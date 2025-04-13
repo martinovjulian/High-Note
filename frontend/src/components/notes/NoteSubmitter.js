@@ -134,28 +134,6 @@ function NoteSubmitter({ lobbyId }) {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label htmlFor="userId" className="block font-medium mb-1">User ID</label>
-          <input
-            id="userId"
-            type="text"
-            value={username}
-            readOnly
-            className="w-full px-4 py-2 rounded-lg bg-gray-600/30 text-white/80 border border-white/30 cursor-not-allowed"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="classId" className="block font-medium mb-1">Lobby ID</label>
-          <input
-            id="classId"
-            type="text"
-            value={lobbyId}
-            readOnly
-            className="w-full px-4 py-2 rounded-lg bg-gray-600/30 text-white/80 border border-white/30 cursor-not-allowed"
-          />
-        </div>
-
-        <div>
           <label htmlFor="content" className="block font-medium mb-1">Note Content</label>
           <textarea
             id="content"

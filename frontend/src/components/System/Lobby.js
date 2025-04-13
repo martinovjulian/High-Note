@@ -1,27 +1,38 @@
 // src/components/System/Lobby.js
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom'; // Added useNavigate import
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import NoteSubmitter from '../notes/NoteSubmitter';
 import axios from 'axios';
 import LobbyLayout from './LobbyLayout';
+import { useAuth } from '../../context/AuthContext';
 
 function Lobby() {
   const { lobbyId } = useParams();
   const [lobbyDetails, setLobbyDetails] = useState(null);
   const [password, setPassword] = useState('');
   const [deleteError, setDeleteError] = useState('');
-  const navigate = useNavigate(); // Added useNavigate if not already present
+  const navigate = useNavigate();
+  const { token } = useAuth();
 
   useEffect(() => {
     setLobbyDetails(null);
-    axios.get(`http://localhost:8000/lobbies/${lobbyId}`)
-      .then(response => setLobbyDetails(response.data))
-      .catch(error => console.error("Failed to fetch lobby details:", error));
-  }, [lobbyId]);
+    axios.get(`http://localhost:8000/lobby/lobbies/${lobbyId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(response => {
+        console.log("Lobby details:", response.data);
+        setLobbyDetails(response.data);
+      })
+      .catch(error => {
+        console.error("Failed to fetch lobby details:", error);
+        setLobbyDetails({ lobby_name: "Error loading lobby" });
+      });
+  }, [lobbyId, token]);
 
   const handleDelete = () => {
-    axios.delete(`http://localhost:8000/lobbies/${lobbyId}`, {
-      data: { password }
+    axios.delete(`http://localhost:8000/lobby/lobbies/${lobbyId}`, {
+      data: { password },
+      headers: { Authorization: `Bearer ${token}` }
     })
     .then(() => navigate('/'))
     .catch(err => setDeleteError(err.response?.data?.detail || 'Deletion failed'));
@@ -32,10 +43,10 @@ function Lobby() {
       <div className="min-h-screen px-6 pt-12 pb-24 bg-gradient-to-br from-indigo-900 via-purple-800 to-fuchsia-900 text-white animate-fadeIn">
         <div className="max-w-4xl mx-auto text-center mb-12">
           <h2 className="text-4xl font-extrabold tracking-wide text-white drop-shadow-lg mb-2">
-            {lobbyDetails ? lobbyDetails.lobby_name : `Lobby ID: ${lobbyId}`}
+            {lobbyDetails?.lobby_name || 'Loading...'}
           </h2>
           <p className="text-purple-200 text-sm font-medium">
-            Welcome to your personal note-taking lounge ✨
+            {'Welcome to your personal note-taking lounge ✨'}
           </p>
         </div>
 
