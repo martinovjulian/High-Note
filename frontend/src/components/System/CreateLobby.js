@@ -129,14 +129,19 @@ function CreateLobby({ onCreateLobby }) {
                 <h3 className="text-lg font-semibold text-gray-700">Advanced Settings</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700 flex items-center">
-                      Student Concepts
-                      <span className="ml-2 text-gray-400 cursor-help" title="Number of concepts each student can submit">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium text-gray-700">Key Concepts</label>
+                      <div className="group relative">
+                        <svg className="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                      </span>
-                    </label>
+                        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block">
+                          <div className="bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                            Amount of concepts to derive and analyze from your notes
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                     <input
                       type="number"
                       name="numConceptsStudent"
@@ -146,14 +151,19 @@ function CreateLobby({ onCreateLobby }) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700 flex items-center">
-                      Class Concepts
-                      <span className="ml-2 text-gray-400 cursor-help" title="Total number of concepts to be analyzed for the class">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium text-gray-700">Dataset</label>
+                      <div className="group relative">
+                        <svg className="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                      </span>
-                    </label>
+                        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block">
+                          <div className="bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                            Number of concepts to derive from entire dataset to analzye against your notes
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                     <input
                       type="number"
                       name="numConceptsClass"
@@ -163,14 +173,19 @@ function CreateLobby({ onCreateLobby }) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700 flex items-center">
-                      Update Threshold
-                      <span className="ml-2 text-gray-400 cursor-help" title="Similarity threshold for updating concept maps (0-1)">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium text-gray-700">Semantic Threshold</label>
+                      <div className="group relative">
+                        <svg className="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                      </span>
-                    </label>
+                        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block">
+                          <div className="bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                            Minimum threshold to derive different concepts ()
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                     <input
                       type="number"
                       step="0.05"
@@ -181,14 +196,19 @@ function CreateLobby({ onCreateLobby }) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700 flex items-center">
-                      Analyze Threshold
-                      <span className="ml-2 text-gray-400 cursor-help" title="Similarity threshold for analyzing concept relationships (0-1)">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium text-gray-700">Analyze Threshold</label>
+                      <div className="group relative">
+                        <svg className="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                      </span>
-                    </label>
+                        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block">
+                          <div className="bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
+                            Similarity threshold for analyzing concept relationships (0-1)
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                     <input
                       type="number"
                       step="0.05"
