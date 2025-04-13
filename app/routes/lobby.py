@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Body  # <- Added Body
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, Any
 from app.db import get_database_client
 
 from bson.objectid import ObjectId
@@ -18,6 +18,7 @@ class LobbyPayload(BaseModel):
     user_count: int = 1  # Default to 1 for the creator
     password: Optional[str] = None  # Allow an optional password
     created_by: Optional[str] = None  # For compatibility; will use current_user in endpoint
+    advanced_settings: Optional[Dict[str, Any]] = None  # Added field for advanced settings
 
 @router.post("/create-lobby")
 async def create_lobby(
@@ -42,7 +43,13 @@ async def create_lobby(
             "description": payload.description,
             "user_count": payload.user_count,
             "created_at": datetime.utcnow(),
-            "password": payload.password
+            "password": payload.password,
+            "advanced_settings": payload.advanced_settings or {
+                "numConceptsStudent": 10,
+                "numConceptsClass": 15,
+                "similarityThresholdUpdate": 0.75,
+                "similarityThresholdAnalyze": 0.8,
+            }
         }
         result = await db.lobbies.insert_one(lobby_data)
         if not result.inserted_id:
@@ -66,7 +73,13 @@ async def get_lobby_by_id(
             "lobby_name": lobby.get("lobby_name", ""),
             "description": lobby.get("description", ""),
             "user_count": lobby.get("user_count", 0),
-            "password": lobby.get("password", None)  # NOTE: Exposing password is for testing only.
+            "password": lobby.get("password", None),  # NOTE: Exposing password is for testing only.
+            "advanced_settings": lobby.get("advanced_settings", {
+                "numConceptsStudent": 10,
+                "numConceptsClass": 15,
+                "similarityThresholdUpdate": 0.75,
+                "similarityThresholdAnalyze": 0.8,
+            })
         }
 
 # Existing delete endpoint (still present; used elsewhere)
@@ -107,7 +120,13 @@ async def get_all_lobbies(
                 "description": lobby.get("description", ""),
                 "user_count": lobby.get("user_count", 0),
                 "created_by": lobby.get("created_by", ""),
-                "created_at": lobby.get("created_at", "")
+                "created_at": lobby.get("created_at", ""),
+                "advanced_settings": lobby.get("advanced_settings", {
+                    "numConceptsStudent": 10,
+                    "numConceptsClass": 15,
+                    "similarityThresholdUpdate": 0.75,
+                    "similarityThresholdAnalyze": 0.8,
+                })
             }
             for lobby in lobbies
         ]
@@ -128,3 +147,35 @@ async def increment_user_count(
         if result.modified_count == 0:
             raise HTTPException(status_code=500, detail="Failed to increment user count")
         return {"message": "User count incremented successfully"}
+
+@router.put("/lobbies/{lobby_id}/update-settings")
+async def update_lobby_settings(
+    lobby_id: str,
+    settings_data: dict = Body(...),
+    current_user: User = Depends(get_current_user),
+    db_client: AsyncIOMotorClient = Depends(get_database_client)
+):
+    async with get_database_client() as client:
+        db = client.notes_db
+        
+        # First check if the lobby exists
+        lobby = await db.lobbies.find_one({"_id": ObjectId(lobby_id)})
+        if not lobby:
+            raise HTTPException(status_code=404, detail="Lobby not found")
+        
+        # Update only the advanced_settings field
+        result = await db.lobbies.update_one(
+            {"_id": ObjectId(lobby_id)},
+            {"$set": {"advanced_settings": settings_data.get("advanced_settings")}}
+        )
+        
+        if result.modified_count == 0:
+            raise HTTPException(status_code=500, detail="Failed to update lobby settings")
+        
+        # Fetch the updated lobby to return
+        updated_lobby = await db.lobbies.find_one({"_id": ObjectId(lobby_id)})
+        
+        return {
+            "message": "Lobby settings updated successfully",
+            "advanced_settings": updated_lobby.get("advanced_settings")
+        }

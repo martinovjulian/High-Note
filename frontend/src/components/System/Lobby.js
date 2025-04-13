@@ -99,7 +99,7 @@ function Lobby() {
         {!loading && !errorMessage && (
           <NoteSubmitter
             lobbyId={lobbyId}
-            advancedSettings={ (lobbyDetails && lobbyDetails.advanced_settings) || advancedSettings }
+            advancedSettings={(lobbyDetails && lobbyDetails.advanced_settings) || advancedSettings}
           />
         )}
 
