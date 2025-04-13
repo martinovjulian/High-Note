@@ -8,9 +8,9 @@ const API_BASE_URL = 'http://localhost:8000';
 function NoteSubmitter({ lobbyId, advancedSettings }) {
   const { username, token } = useAuth();
   const [content, setContent] = useState('');
+  const [pdfFile, setPdfFile] = useState(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
   const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
@@ -18,27 +18,31 @@ function NoteSubmitter({ lobbyId, advancedSettings }) {
     setIsLoading(true);
     setError('');
 
-    const requestBody = {
-      user_id: username,
-      class_id: lobbyId,
-      content: content,
-    };
-
-    if (!username || !lobbyId || !content) {
-      setError('Please fill in all fields.');
+    // Allow submission if either text content or a PDF is provided
+    if (!username || !lobbyId || (!content && !pdfFile)) {
+      setError('Please provide note text or upload a PDF.');
       setIsLoading(false);
       return;
     }
 
+    // Create FormData to combine text and file data
+    const formData = new FormData();
+    formData.append("user_id", username);
+    formData.append("class_id", lobbyId);
+    formData.append("content", content);
+    if (pdfFile) {
+      formData.append("pdf_file", pdfFile);
+    }
+
     try {
-      // 1. Submit the note
+      // Submit note (and PDF file if provided)
       const submitResponse = await fetch(`${API_BASE_URL}/notes/submit-note`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
+        headers: {
+          // Do not set Content-Type with FormData – it is set automatically.
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(requestBody),
+        body: formData,
       });
 
       let submitResult = {};
@@ -72,13 +76,13 @@ function NoteSubmitter({ lobbyId, advancedSettings }) {
       // Optionally increment the lobby's user count
       await fetch(`${API_BASE_URL}/lobby/lobbies/${lobbyId}/increment-user-count`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
       });
 
-      // 2. Run update_student_concepts with student-specific settings
+      // Run update_student_concepts with student-specific settings
       await fetch(`${API_BASE_URL}/notes/update-student-concepts`, {
         method: 'POST',
         headers: { 
@@ -93,7 +97,7 @@ function NoteSubmitter({ lobbyId, advancedSettings }) {
         }),
       });
 
-      // 3. Run analyze_concepts_enhanced with class-specific settings
+      // Run analyze_concepts_enhanced with class-specific settings
       const analyzeResponse = await fetch(
         `${API_BASE_URL}/notes/analyze-concepts-enhanced?user_id=${username}&class_id=${lobbyId}` +
           `&num_concepts=${advancedSettings.numConceptsClass}` +
@@ -107,6 +111,7 @@ function NoteSubmitter({ lobbyId, advancedSettings }) {
           },
         }
       );
+
       let analyzeResult = {};
       try {
         analyzeResult = await analyzeResponse.json();
@@ -132,7 +137,7 @@ function NoteSubmitter({ lobbyId, advancedSettings }) {
     <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur-xl rounded-xl p-8 border border-white/20 shadow-2xl mt-10 animate-fadeIn text-white">
       <h2 className="text-3xl font-bold mb-2 text-purple-200">📝 Submit a New Note</h2>
       <p className="text-sm text-white/80 mb-6">
-        Fill in the details and hit submit. You will be redirected to view your analysis.
+        Fill in the details, upload a PDF if needed, and hit submit. You will be redirected to view your analysis.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -146,8 +151,22 @@ function NoteSubmitter({ lobbyId, advancedSettings }) {
             onChange={(e) => setContent(e.target.value)}
             rows="6"
             disabled={isLoading}
-            required
+            placeholder="Enter your note text here (optional if uploading a PDF)"
             className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-white/70 resize-y"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="pdfFile" className="block font-medium mb-1">
+            Upload PDF (optional)
+          </label>
+          <input
+            id="pdfFile"
+            type="file"
+            accept="application/pdf"
+            onChange={(e) => setPdfFile(e.target.files[0])}
+            disabled={isLoading}
+            className="w-full px-4 py-2 rounded-lg bg-gray-600/30 text-white/80 border border-white/30"
           />
         </div>
 
