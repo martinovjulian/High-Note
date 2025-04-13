@@ -14,31 +14,39 @@ const Hub = () => {
   const isAnalysisPage = location.pathname.startsWith('/analysis');
   const [lobbies, setLobbies] = useState([]);
   
-  // State for the password modal and lobby selection.
+  // State for the password modal and lobby selection
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [selectedLobby, setSelectedLobby] = useState(null);
   const [enteredPassword, setEnteredPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (token) {
+      setIsLoading(true);
       axios
         .get('http://localhost:8000/lobby/lobbies', {
           headers: { Authorization: `Bearer ${token}` }
         })
-        .then((response) => setLobbies(response.data))
-        .catch((error) => console.error('Error fetching lobbies:', error));
+        .then((response) => {
+          setLobbies(response.data);
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          console.error('Error fetching lobbies:', error);
+          setIsLoading(false);
+        });
     }
   }, [token]);
 
-  // Updated addLobby: now includes advancedSettings parameter
   const addLobby = (lobbyName, description, password, advancedSettings) => {
+    setIsLoading(true);
     axios
       .post(
         'http://localhost:8000/lobby/create-lobby',
         {
           lobby_name: lobbyName,
           description: description,
-          user_count: 1, // the creator joins immediately
+          user_count: 1,
           password: password,
           advanced_settings: advancedSettings
         },
@@ -51,8 +59,14 @@ const Hub = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
       })
-      .then((response) => setLobbies(response.data))
-      .catch((error) => console.error('Error creating lobby:', error));
+      .then((response) => {
+        setLobbies(response.data);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error('Error creating lobby:', error);
+        setIsLoading(false);
+      });
   };
 
   if (!token) {
@@ -66,12 +80,10 @@ const Hub = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       const fullLobby = res.data;
-      // If the lobby does not require a password, navigate immediately.
       if (!fullLobby.password) {
         navigate(`/lobby/${lobby.lobby_id}`);
         return;
       }
-      // Otherwise, show the password modal.
       setSelectedLobby(fullLobby);
       setShowPasswordModal(true);
     } catch (error) {
@@ -96,74 +108,123 @@ const Hub = () => {
       {!isLobbyPage && !isAnalysisPage && (
         <>
           <div className="py-12 px-6 max-w-6xl mx-auto">
-            <CreateLobby onCreateLobby={addLobby} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mt-12">
-              {lobbies.map((lobby, index) => {
-                const gradients = [
-                  'from-fuchsia-600 to-pink-500',
-                  'from-indigo-600 to-purple-500',
-                  'from-cyan-500 to-blue-500',
-                  'from-lime-500 to-emerald-400',
-                  'from-yellow-400 to-orange-500',
-                ];
-                const gradient = gradients[index % gradients.length];
-                return (
+            <div className="mb-12 text-center">
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-white to-purple-300 bg-clip-text text-transparent mb-4">
+                High Note
+              </h1>
+              <p className="text-xl text-purple-200">
+                Elevate your study sessions with collaborative learning
+              </p>
+            </div>
+
+            <div className="mb-12">
+              <CreateLobby onCreateLobby={addLobby} />
+            </div>
+
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mt-12">
+                {lobbies.map((lobby) => (
                   <div
                     key={lobby.lobby_id}
                     onClick={() => handleLobbyClick(lobby)}
                     className="cursor-pointer relative group transform transition duration-500 hover:scale-[1.03] animate-float"
                   >
-                    <div className={`bg-gradient-to-br ${gradient} rounded-2xl p-6 shadow-2xl backdrop-blur-md bg-opacity-80 border border-white/20 transition-all duration-300`}>
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-2xl font-bold tracking-wide">{lobby.lobby_name}</h3>
-                        {/* <span className="inline-flex items-center px-2 py-1 text-sm font-semibold bg-green-500 text-white rounded-full animate-pulse shadow">
-                          🟢 Online
-                        </span> */}
+                    <div className="bg-gradient-to-br from-white to-purple-50 rounded-2xl p-6 shadow-xl backdrop-blur-md border border-purple-100 transition-all duration-300 hover:border-purple-300 hover:shadow-2xl">
+                      {/* Lobby Header */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                          <h3 className="text-2xl font-bold tracking-wide text-purple-900">{lobby.lobby_name}</h3>
+                          {lobby.password && (
+                            <span className="inline-flex items-center px-2 py-1 text-xs font-semibold bg-purple-100 text-purple-700 rounded-full border border-purple-200">
+                              🔒 Private
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-sm text-white/90 mb-4">
+
+                      {/* Description */}
+                      <p className="text-sm text-gray-600 mb-6 line-clamp-2">
                         {lobby.description || 'No description provided.'}
                       </p>
-                      <div className="flex items-center gap-2 text-sm font-medium text-white/90">
-                        <span className="text-lg">👥</span>
-                        <span>{lobby.user_count || 0} Notes Submitted</span>
+
+                      {/* Lobby Stats */}
+                      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-purple-100">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center border border-purple-200">
+                            <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">Members</p>
+                            <p className="text-sm font-medium text-purple-700">{lobby.user_count || 0}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center border border-purple-200">
+                            <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">Notes</p>
+                            <p className="text-sm font-medium text-purple-700">{lobby.notes_count || 0}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Join Button */}
+                      <div className="mt-4">
+                        <button className="w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all duration-200 flex items-center justify-center space-x-2 group-hover:scale-105">
+                          <span>Join Session</span>
+                          <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                          </svg>
+                        </button>
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Password Modal */}
+          {/* Enhanced Password Modal */}
           {showPasswordModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-80 relative">
-                <button
-                  onClick={() => {
-                    setShowPasswordModal(false);
-                    setEnteredPassword('');
-                    setSelectedLobby(null);
-                  }}
-                  className="absolute top-2 left-2 text-3xl font-bold text-red-600 hover:text-red-800 focus:outline-none"
-                >
-                  &times;
-                </button>
-                <h3 className="text-xl font-bold mb-4 text-center text-gray-900 dark:text-gray-100">
-                  Enter Lobby Password
-                </h3>
-                <input 
-                  type="password"
-                  value={enteredPassword}
-                  onChange={(e) => setEnteredPassword(e.target.value)}
-                  placeholder="Password"
-                  className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
-                />
-                <div className="flex justify-end">
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
+              <div className="bg-gradient-to-br from-purple-800/90 to-indigo-900/90 backdrop-blur-lg rounded-2xl shadow-2xl p-8 w-96 transform transition-all duration-300 animate-fade-in">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-2xl font-bold text-white">Enter Session Password</h3>
+                  <button
+                    onClick={() => {
+                      setShowPasswordModal(false);
+                      setEnteredPassword('');
+                      setSelectedLobby(null);
+                    }}
+                    className="text-white/70 hover:text-white transition-colors duration-200"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  <input 
+                    type="password"
+                    value={enteredPassword}
+                    onChange={(e) => setEnteredPassword(e.target.value)}
+                    placeholder="Enter password"
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                  />
                   <button 
                     onClick={handlePasswordSubmit}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-lg"
                   >
-                    Submit
+                    Join Session
                   </button>
                 </div>
               </div>

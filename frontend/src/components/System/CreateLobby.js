@@ -53,129 +53,145 @@ function CreateLobby({ onCreateLobby }) {
   return (
     <>
       <button
-        className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold px-6 py-3 rounded-full shadow-md hover:shadow-purple-500/50 hover:scale-105 transition duration-300 ease-in-out"
+        className="group relative bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold px-8 py-4 rounded-xl shadow-lg hover:shadow-purple-500/50 hover:scale-105 transition-all duration-300 ease-in-out overflow-hidden"
         onClick={() => setShowModal(true)}
       >
-        + Create Lobby
+        <span className="relative z-10 flex items-center space-x-2">
+          <svg className="w-5 h-5 transform group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Create Session</span>
+        </span>
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </button>
 
       {showModal && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-sm animate-fadeIn"
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm animate-fadeIn"
           onClick={() => setShowModal(false)}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform scale-100 animate-popIn"
+            className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform scale-100 animate-popIn border border-purple-100"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-3xl font-extrabold mb-4 text-purple-700 text-center">
-              Create New Lobby
-            </h2>
-            <form onSubmit={handleSubmit}>
-              <input
-                type="text"
-                placeholder="Lobby name"
-                value={lobbyName}
-                onChange={(e) => setLobbyName(e.target.value)}
-                required
-                className="w-full mb-4 p-3 border-2 border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-800 font-medium"
-              />
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-3xl font-extrabold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                Create New Session
+              </h2>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-              <textarea
-                placeholder="Description (max 50 words)"
-                value={description}
-                onChange={handleDescriptionChange}
-                className="w-full mb-2 p-3 border-2 border-purple-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-700 font-medium"
-              />
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Session Name</label>
+                <input
+                  type="text"
+                  placeholder="Enter session name"
+                  value={lobbyName}
+                  onChange={(e) => setLobbyName(e.target.value)}
+                  required
+                  className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-400 transition-all duration-200"
+                />
+              </div>
 
-              {/* Added password field */}
-              <input
-                type="password"
-                placeholder="Lobby Password (optional)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full mb-4 p-3 border-2 border-purple-300 rounded-lg"
-              />
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Description (max 50 words)</label>
+                <textarea
+                  placeholder="Describe your session"
+                  value={description}
+                  onChange={handleDescriptionChange}
+                  className="w-full p-3 bg-white border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-400 transition-all duration-200"
+                  rows="3"
+                />
+                {wordWarning && (
+                  <p className="text-red-500 text-sm">{wordWarning}</p>
+                )}
+              </div>
 
-              {wordWarning && (
-                <p className="text-red-500 text-sm mb-2">{wordWarning}</p>
-              )}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Password (optional)</label>
+                <input
+                  type="password"
+                  placeholder="Set a password for private access"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-400 transition-all duration-200"
+                />
+              </div>
 
-              {/* Advanced Settings Section */}
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2 text-purple-700">Advanced Settings</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Student Concepts Count
-                    </label>
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-700">Advanced Settings</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Student Concepts</label>
                     <input
                       type="number"
                       name="numConceptsStudent"
                       value={advancedSettings.numConceptsStudent}
                       onChange={handleSettingsChange}
-                      className="mt-1 block w-full rounded-md p-2 border-2 border-purple-300 text-gray-800"
+                      className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 transition-all duration-200"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Class Concepts Count
-                    </label>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Class Concepts</label>
                     <input
                       type="number"
                       name="numConceptsClass"
                       value={advancedSettings.numConceptsClass}
                       onChange={handleSettingsChange}
-                      className="mt-1 block w-full rounded-md p-2 border-2 border-purple-300 text-gray-800"
+                      className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 transition-all duration-200"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Update Threshold
-                    </label>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Update Threshold</label>
                     <input
                       type="number"
                       step="0.05"
                       name="similarityThresholdUpdate"
                       value={advancedSettings.similarityThresholdUpdate}
                       onChange={handleSettingsChange}
-                      className="mt-1 block w-full rounded-md p-2 border-2 border-purple-300 text-gray-800"
+                      className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 transition-all duration-200"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Analyze Threshold
-                    </label>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Analyze Threshold</label>
                     <input
                       type="number"
                       step="0.05"
                       name="similarityThresholdAnalyze"
                       value={advancedSettings.similarityThresholdAnalyze}
                       onChange={handleSettingsChange}
-                      className="mt-1 block w-full rounded-md p-2 border-2 border-purple-300 text-gray-800"
+                      className="w-full p-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 transition-all duration-200"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-4 mt-4">
-                <button
-                  type="submit"
-                  disabled={!!wordWarning}
-                  className={`px-5 py-2 rounded-lg text-white font-semibold transition duration-300 ease-in-out ${
-                    wordWarning
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:scale-105 hover:shadow-md hover:shadow-indigo-500/50'
-                  }`}
-                >
-                  Create
-                </button>
+              <div className="flex justify-end space-x-4 mt-6">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-5 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold transition duration-200"
+                  className="px-5 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold transition-all duration-200 border border-gray-200"
                 >
                   Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!!wordWarning}
+                  className={`px-5 py-2 rounded-lg font-semibold transition-all duration-200 ${
+                    wordWarning
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:scale-105 hover:shadow-lg hover:shadow-purple-500/50'
+                  }`}
+                >
+                  Create Session
                 </button>
               </div>
             </form>
