@@ -22,7 +22,6 @@ async def submit_note(
     payload: NotePayload,
     db_client: AsyncIOMotorClient = Depends(get_database_client)
 ):
-    # Use the context manager properly
     async with get_database_client() as client:
         db = client.notes_db
         note_data = {
@@ -31,10 +30,19 @@ async def submit_note(
             "class_id": payload.class_id
         }
 
-        result = await db.notes.insert_one(note_data)
-        if not result.inserted_id:
-            raise HTTPException(status_code=500, detail="Failed to submit note")
-        return {"message": "Note submitted successfully", "id": str(result.inserted_id)}
+        # Update existing note or insert if it doesn't exist
+        result = await db.notes.update_one(
+            {"user_id": payload.user_id, "class_id": payload.class_id},
+            {"$set": note_data},
+            upsert=True
+        )
+
+        return {
+            "message": "Note submitted or updated successfully",
+            "modified_count": result.modified_count,
+            "upserted_id": str(result.upserted_id) if result.upserted_id else None
+        }
+
 # ... (rest of your routes remain the same) ...
 
 

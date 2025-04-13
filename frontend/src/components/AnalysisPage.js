@@ -90,7 +90,7 @@ function AnalysisPage() {
         {/* Sidebar for Missing Concepts */}
         {missingConcepts && missingConcepts.length > 0 && (
           <aside className="w-full md:w-1/3 bg-white/20 p-6 rounded-2xl shadow-lg">
-            <h2 className="text-2xl font-semibold mb-4 border-b border-white/30 pb-2">Missing Concepts</h2>
+            <h2 className="text-2xl font-semibold mb-4 border-b border-white/30 pb-2"> </h2>
             <ul className="space-y-3">
               {missingConcepts.map((concept, index) => (
                 <li key={index} className="bg-purple-700 bg-opacity-80 p-3 rounded shadow">
