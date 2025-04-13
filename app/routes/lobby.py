@@ -147,3 +147,35 @@ async def increment_user_count(
         if result.modified_count == 0:
             raise HTTPException(status_code=500, detail="Failed to increment user count")
         return {"message": "User count incremented successfully"}
+
+@router.put("/lobbies/{lobby_id}/update-settings")
+async def update_lobby_settings(
+    lobby_id: str,
+    settings_data: dict = Body(...),
+    current_user: User = Depends(get_current_user),
+    db_client: AsyncIOMotorClient = Depends(get_database_client)
+):
+    async with get_database_client() as client:
+        db = client.notes_db
+        
+        # First check if the lobby exists
+        lobby = await db.lobbies.find_one({"_id": ObjectId(lobby_id)})
+        if not lobby:
+            raise HTTPException(status_code=404, detail="Lobby not found")
+        
+        # Update only the advanced_settings field
+        result = await db.lobbies.update_one(
+            {"_id": ObjectId(lobby_id)},
+            {"$set": {"advanced_settings": settings_data.get("advanced_settings")}}
+        )
+        
+        if result.modified_count == 0:
+            raise HTTPException(status_code=500, detail="Failed to update lobby settings")
+        
+        # Fetch the updated lobby to return
+        updated_lobby = await db.lobbies.find_one({"_id": ObjectId(lobby_id)})
+        
+        return {
+            "message": "Lobby settings updated successfully",
+            "advanced_settings": updated_lobby.get("advanced_settings")
+        }
