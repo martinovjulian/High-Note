@@ -152,14 +152,14 @@ function CreateLobby({ onCreateLobby }) {
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <label className="text-sm font-medium text-gray-700">Dataset</label>
+                      <label className="text-sm font-medium text-gray-700">Other Students Concepts</label>
                       <div className="group relative">
                         <svg className="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block">
                           <div className="bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
-                            Number of concepts to derive from entire dataset to analzye against your notes
+                            Number of concepts to derive from other students to analzye against your notes
                           </div>
                         </div>
                       </div>
@@ -174,14 +174,15 @@ function CreateLobby({ onCreateLobby }) {
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <label className="text-sm font-medium text-gray-700">Semantic Threshold</label>
+                      <label className="text-sm font-medium text-gray-700">Similarity Threshold</label>
                       <div className="group relative">
                         <svg className="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block">
                           <div className="bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
-                            Minimum threshold to derive different concepts ()
+                          Sets how closely two phrases must match to be considered the same concept.
+                          Higher values require stronger overlap or exact wording 
                           </div>
                         </div>
                       </div>
@@ -197,14 +198,15 @@ function CreateLobby({ onCreateLobby }) {
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <label className="text-sm font-medium text-gray-700">Analyze Threshold</label>
+                      <label className="text-sm font-medium text-gray-700">Concept Similarity Threshold</label>
                       <div className="group relative">
                         <svg className="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block">
                           <div className="bg-gray-800 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
-                            Similarity threshold for analyzing concept relationships (0-1)
+                          Controls how closely two ideas must match to be considered the same topic.
+                          Higher values require stronger similarity (e.g., exact phrases or very closely related terms).
                           </div>
                         </div>
                       </div>
