@@ -323,9 +323,10 @@ async def detailed_note_analysis(
                 genai.configure(api_key=api_key)
                 gemini_model = genai.GenerativeModel("gemini-1.5-flash")
 
+                # Updated prompt: always request strengthsAndWeaknesses regardless of whether other notes exist.
                 if other_students_notes:
                     prompt = f"""
-                    As an educational assistant, analyze these notes and focus on extracting valuable information from the dataset to enhance the student's notes:
+                    As an educational assistant, analyze these notes and focus on extracting valuable information from the dataset to enhance the student's notes.
 
                     STUDENT'S NOTES (TO BE ENHANCED):
                     {student_content_condensed}
@@ -339,20 +340,22 @@ async def detailed_note_analysis(
                     EXTRACTED KEY CONCEPTS FROM DATASET:
                     {', '.join(extract_key_concepts(other_content))}
 
-                    Your task is to identify specific content—facts, definitions, or examples—from the dataset that would complement and improve the student's notes.
-                    
                     Provide a JSON response with the following structure:
                     {{
                         "topicCoverage": [...],
                         "missingTopics": [...],
                         "datasetKnowledge": [...],
                         "qualityAssessment": "...",
+                        "strengthsAndWeaknesses": {{
+                            "strengths": [...],
+                            "weaknesses": [...]
+                        }},
                         "studyRecommendations": [...]
                     }}
                     """
                 else:
                     prompt = f"""
-                    As an educational assistant, analyze these student notes and provide feedback:
+                    As an educational assistant, analyze these student notes and provide feedback.
 
                     STUDENT'S NOTES:
                     {student_content_condensed}
@@ -363,6 +366,8 @@ async def detailed_note_analysis(
                     Provide a JSON response with the following structure:
                     {{
                         "topicCoverage": [...],
+                        "missingTopics": [...],
+                        "datasetKnowledge": [...],
                         "qualityAssessment": "...",
                         "strengthsAndWeaknesses": {{
                             "strengths": [...],
@@ -397,8 +402,8 @@ async def detailed_note_analysis(
                                 "class_id": class_id,
                                 "analysis": analysis
                             }
-                        except:
-                            pass
+                        except Exception as ex:
+                            print(f"Failed to parse extracted JSON: {ex}")
                     return {
                         "status": "partial_success",
                         "student_id": user_id,
@@ -426,6 +431,7 @@ async def detailed_note_analysis(
             "message": str(general_err),
             "details": "Error occurred while processing the analysis request"
         }
+
 
 # -------------------------------------------------------------------
 # /check-environment endpoint: Debug and report environment details.
