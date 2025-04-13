@@ -1,19 +1,10 @@
-// src/Pages/Hub.js
-// src/components/Pages/Hub.js
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-
-// Updated relative paths:
 import CreateLobby from '../System/CreateLobby';
 import Lobby from '../System/Lobby';
-
-// If AnalysisPage is in src/components/, then:
 import AnalysisPage from './AnalysisPage';
-
-// And AuthContext is likely in src/context/, so:
 import { useAuth } from '../../context/AuthContext';
-
 
 const Hub = () => {
   const location = useLocation();
@@ -39,15 +30,17 @@ const Hub = () => {
     }
   }, [token]);
 
-  const addLobby = (lobbyName, description, password) => {
+  // Updated addLobby: now includes advancedSettings parameter
+  const addLobby = (lobbyName, description, password, advancedSettings) => {
     axios
       .post(
         'http://localhost:8000/lobby/create-lobby',
         {
           lobby_name: lobbyName,
-          description,
-          user_count: 1, // creator immediately joins
-          password,
+          description: description,
+          user_count: 1, // the creator joins immediately
+          password: password,
+          advanced_settings: advancedSettings
         },
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -63,7 +56,6 @@ const Hub = () => {
   };
 
   if (!token) {
-    // If user is not authenticated, redirect or handle appropriately.
     navigate('/login');
     return null;
   }
@@ -74,10 +66,12 @@ const Hub = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       const fullLobby = res.data;
+      // If the lobby does not require a password, navigate immediately.
       if (!fullLobby.password) {
         navigate(`/lobby/${lobby.lobby_id}`);
         return;
       }
+      // Otherwise, show the password modal.
       setSelectedLobby(fullLobby);
       setShowPasswordModal(true);
     } catch (error) {
