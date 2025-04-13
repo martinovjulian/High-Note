@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // <-- Import useNavigate hook
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const AuthForm = () => {
@@ -10,7 +10,7 @@ const AuthForm = () => {
   const [error, setError] = useState('');
   const { login, signup, showLogin, toggleAuthMode } = useAuth();
   
-  const navigate = useNavigate();  // <-- Initialize useNavigate
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,7 +31,6 @@ const AuthForm = () => {
       }
 
       if (success) {
-        // Instead of reloading the page, navigate to the Hub component
         navigate('/app');
       }
     } catch (error) {
@@ -40,8 +39,25 @@ const AuthForm = () => {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
+    <div className="fixed inset-0 flex items-center justify-center">
+      {/* Video Background */}
+      <video 
+        autoPlay 
+        loop 
+        muted 
+        playsInline
+        className="absolute w-full h-full object-cover z-0"
+        style={{ filter: 'brightness(0.7)' }}
+      >
+        <source src="/students-stuying.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+      
+      {/* Dark overlay for better text readability */}
+      <div className="absolute inset-0 bg-purple-900/40 backdrop-blur-sm z-0"></div>
+      
+      {/* Auth Form Container with glass morphism effect */}
+      <div className="bg-white/80 backdrop-blur-md p-8 rounded-lg shadow-2xl max-w-md w-full z-10 border border-white/20">
         <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
           {showLogin ? 'Login' : 'Sign Up'}
         </h2>
@@ -100,7 +116,7 @@ const AuthForm = () => {
 
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2 px-4 rounded-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           >
             {showLogin ? 'Login' : 'Sign Up'}
           </button>
@@ -112,7 +128,7 @@ const AuthForm = () => {
               className="text-indigo-600 hover:text-indigo-800 text-sm"
             >
               {showLogin
-                ? "Don't have an account? Sign up"
+                ? "Don't have an account? Sign Up"
                 : "Already have an account? Login"}
             </button>
           </div>

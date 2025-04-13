@@ -23,9 +23,9 @@ const LandingPage = () => {
             NoteSync
           </div>
           <div className="space-x-8">
-            <a href="#features" className="text-white hover:text-purple-300 transition-colors">Features</a>
+            {/* <a href="#features" className="text-white hover:text-purple-300 transition-colors">Features</a>
             <a href="#how-it-works" className="text-white hover:text-purple-300 transition-colors">How It Works</a>
-            <a href="#about" className="text-white hover:text-purple-300 transition-colors">About</a>
+            <a href="#about" className="text-white hover:text-purple-300 transition-colors">About</a> */}
           </div>
         </nav>
 
@@ -78,14 +78,14 @@ const LandingPage = () => {
             <div className="relative w-full max-w-md">
               <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg shadow-2xl p-1">
                 <img 
-                  src="https://via.placeholder.com/500x400/6a3de8/FFFFFF?text=NoteSync" 
-                  alt="NoteSync App Demo" 
+                  src="/working-together.png" 
+                  alt="Students working together" 
                   className="w-full h-auto rounded"
                 />
               </div>
-              <div className="absolute -top-4 -right-4 bg-purple-500 rounded-full w-16 h-16 flex items-center justify-center text-white font-bold text-sm">
+              {/* <div className="absolute -top-4 -right-4 bg-purple-500 rounded-full w-16 h-16 flex items-center justify-center text-white font-bold text-sm">
                 AI Powered
-              </div>
+              </div> */}
             </div>
           </div>
         </section>
