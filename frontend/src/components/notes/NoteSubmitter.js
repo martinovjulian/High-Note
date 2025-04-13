@@ -1,10 +1,11 @@
+// src/components/notes/NoteSubmitter.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const API_BASE_URL = 'http://localhost:8000';
 
-function NoteSubmitter({ lobbyId }) {
+function NoteSubmitter({ lobbyId, advancedSettings }) {
   const { username, token } = useAuth();
   const [content, setContent] = useState('');
   const [error, setError] = useState('');
@@ -35,7 +36,7 @@ function NoteSubmitter({ lobbyId }) {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(requestBody),
       });
@@ -46,7 +47,6 @@ function NoteSubmitter({ lobbyId }) {
       } catch (parseError) {
         console.error("Could not parse response JSON:", parseError);
         if (submitResponse.ok) {
-          // If successful but unparseable, continue anyway.
           submitResult = {};
         } else {
           throw new Error(`HTTP error! Status: ${submitResponse.status}. Response not valid JSON.`);
@@ -69,33 +69,36 @@ function NoteSubmitter({ lobbyId }) {
         throw new Error(errorDetail);
       }
 
-      // Optionally, increment the lobby's user count
+      // Optionally increment the lobby's user count
       await fetch(`${API_BASE_URL}/lobby/lobbies/${lobbyId}/increment-user-count`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
+          'Authorization': `Bearer ${token}`
         },
       });
 
-      // 2. Run update_student_concepts endpoint
+      // 2. Run update_student_concepts with student-specific settings
       await fetch(`${API_BASE_URL}/notes/update-student-concepts`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           user_id: username,
           class_id: lobbyId,
-          num_concepts: 5, // adjust as needed
+          num_concepts: advancedSettings.numConceptsStudent,
+          similarity_threshold: advancedSettings.similarityThresholdUpdate,
         }),
       });
 
-      // 3. Run analyze_concepts_enhanced only if another student's note exists:
-      // This endpoint returns various concept lists including missing_concepts.
+      // 3. Run analyze_concepts_enhanced with class-specific settings
       const analyzeResponse = await fetch(
-        `${API_BASE_URL}/notes/analyze-concepts-enhanced?user_id=${username}&class_id=${lobbyId}&num_concepts=10`,
+        `${API_BASE_URL}/notes/analyze-concepts-enhanced?user_id=${username}&class_id=${lobbyId}` +
+          `&num_concepts=${advancedSettings.numConceptsClass}` +
+          `&similarity_threshold=${advancedSettings.similarityThresholdUpdate}` +
+          `&sim_threshold=${advancedSettings.similarityThresholdAnalyze}`,
         {
           method: 'GET',
           headers: {
@@ -112,7 +115,7 @@ function NoteSubmitter({ lobbyId }) {
         analyzeResult = {};
       }
 
-      // Redirect to Analysis page passing the missing concepts if they exist.
+      // Redirect to Analysis page passing the missing concepts via router state.
       navigate(
         `/analysis?classId=${lobbyId}&userId=${username}`,
         { state: { missingConcepts: analyzeResult.missing_concepts || [] } }
@@ -134,7 +137,35 @@ function NoteSubmitter({ lobbyId }) {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label htmlFor="content" className="block font-medium mb-1">Note Content</label>
+          <label htmlFor="userId" className="block font-medium mb-1">
+            User ID
+          </label>
+          <input
+            id="userId"
+            type="text"
+            value={username}
+            readOnly
+            className="w-full px-4 py-2 rounded-lg bg-gray-600/30 text-white/80 border border-white/30 cursor-not-allowed"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="classId" className="block font-medium mb-1">
+            Lobby ID
+          </label>
+          <input
+            id="classId"
+            type="text"
+            value={lobbyId}
+            readOnly
+            className="w-full px-4 py-2 rounded-lg bg-gray-600/30 text-white/80 border border-white/30 cursor-not-allowed"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="content" className="block font-medium mb-1">
+            Note Content
+          </label>
           <textarea
             id="content"
             value={content}

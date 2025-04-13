@@ -14,28 +14,52 @@ function Lobby() {
   const navigate = useNavigate();
   const { token } = useAuth();
 
+  // Advanced settings with separate concept counts for student and class,
+  // plus thresholds.
+  const [advancedSettings, setAdvancedSettings] = useState({
+    numConceptsStudent: 10,
+    numConceptsClass: 15,
+    similarityThresholdUpdate: 0.75,
+    similarityThresholdAnalyze: 0.8,
+  });
+
+  const handleSettingsChange = (e) => {
+    const { name, value } = e.target;
+    setAdvancedSettings((prev) => ({
+      ...prev,
+      [name]:
+        name.includes("numConcepts")
+          ? parseInt(value, 10)
+          : parseFloat(value),
+    }));
+  };
+
   useEffect(() => {
     setLobbyDetails(null);
-    axios.get(`http://localhost:8000/lobby/lobbies/${lobbyId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(response => {
+    axios
+      .get(`http://localhost:8000/lobby/lobbies/${lobbyId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((response) => {
         console.log("Lobby details:", response.data);
         setLobbyDetails(response.data);
       })
-      .catch(error => {
+      .catch((error) => {
         console.error("Failed to fetch lobby details:", error);
         setLobbyDetails({ lobby_name: "Error loading lobby" });
       });
   }, [lobbyId, token]);
 
   const handleDelete = () => {
-    axios.delete(`http://localhost:8000/lobby/lobbies/${lobbyId}`, {
-      data: { password },
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    .then(() => navigate('/'))
-    .catch(err => setDeleteError(err.response?.data?.detail || 'Deletion failed'));
+    axios
+      .delete(`http://localhost:8000/lobby/lobbies/${lobbyId}`, {
+        data: { password },
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then(() => navigate('/'))
+      .catch((err) =>
+        setDeleteError(err.response?.data?.detail || 'Deletion failed')
+      );
   };
 
   return (
@@ -50,9 +74,67 @@ function Lobby() {
           </p>
         </div>
 
-        <NoteSubmitter lobbyId={lobbyId} />
+        {/* Pass advanced settings as a prop to NoteSubmitter */}
+        <NoteSubmitter lobbyId={lobbyId} advancedSettings={advancedSettings} />
 
-        {/* Existing deletion functionality remains here */}
+        {/* Advanced Settings Section */}
+        <div className="mt-10 bg-white/20 p-4 rounded-xl">
+          <h3 className="text-xl font-bold mb-2">Advanced Settings</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium">
+                Student Concepts Count
+              </label>
+              <input
+                type="number"
+                name="numConceptsStudent"
+                value={advancedSettings.numConceptsStudent}
+                onChange={handleSettingsChange}
+                className="mt-1 block w-full rounded-md p-2 text-black"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium">
+                Class Concepts Count
+              </label>
+              <input
+                type="number"
+                name="numConceptsClass"
+                value={advancedSettings.numConceptsClass}
+                onChange={handleSettingsChange}
+                className="mt-1 block w-full rounded-md p-2 text-black"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium">
+                Update Threshold
+              </label>
+              <input
+                type="number"
+                step="0.05"
+                name="similarityThresholdUpdate"
+                value={advancedSettings.similarityThresholdUpdate}
+                onChange={handleSettingsChange}
+                className="mt-1 block w-full rounded-md p-2 text-black"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium">
+                Analyze Threshold
+              </label>
+              <input
+                type="number"
+                step="0.05"
+                name="similarityThresholdAnalyze"
+                value={advancedSettings.similarityThresholdAnalyze}
+                onChange={handleSettingsChange}
+                className="mt-1 block w-full rounded-md p-2 text-black"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Existing deletion functionality */}
         <div className="mt-10">
           <input
             type="password"
