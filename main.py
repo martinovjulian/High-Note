@@ -3,6 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routes.routes import router as note_router
 from app.routes.lobby import router as lobby_router
 from app.routes.auth import router as auth_router, get_current_user
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = FastAPI()
 

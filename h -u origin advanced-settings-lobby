@@ -1,5 +1,0 @@
-[33mcommit ccd84aa3af6e68ca046edd1401e744b449fca911[m[33m ([m[1;36mHEAD -> [m[1;32madvanced-settings-lobby[m[33m)[m
-Author: JaydenChung <03.jayden@gmail.com>
-Date:   Sat Apr 12 20:40:35 2025 -0700
-
-    Move advanced settings from Lobby to CreateLobby component
