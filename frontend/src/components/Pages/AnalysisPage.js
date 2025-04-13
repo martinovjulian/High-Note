@@ -269,7 +269,7 @@ return annotatedContent;
     setShowHighNoteView(false);
   };
 
-  // Save High Note to the user’s notes and sync to the server
+  // Save High Note to the user's notes and sync to the server
   const saveHighNote = () => {
     if (highNoteAdded) return;
     
@@ -583,25 +583,29 @@ return annotatedContent;
                         <div className="space-y-4">
                           <div>
                             <div className="flex justify-between text-sm text-purple-600 mb-2">
-                              <span>Covered Topics</span>
-                              <span>{geminiAnalysis.topicCoverage?.length || 0}</span>
+                              <span>Coverage Percentage</span>
+                              <span>
+                                {geminiAnalysis.topicCoverage && geminiAnalysis.missingTopics
+                                  ? `${Math.round(
+                                      (geminiAnalysis.topicCoverage.length /
+                                        (geminiAnalysis.topicCoverage.length + geminiAnalysis.missingTopics.length)) *
+                                        100
+                                    )}%`
+                                  : '0%'}
+                              </span>
                             </div>
                             <div className="h-3 bg-purple-100 rounded-full overflow-hidden">
                               <div 
                                 className="h-full bg-gradient-to-r from-purple-400 to-indigo-400 rounded-full transition-all duration-1000"
-                                style={{ width: '75%' }}
-                              ></div>
-                            </div>
-                          </div>
-                          <div>
-                            <div className="flex justify-between text-sm text-purple-600 mb-2">
-                              <span>Missing Topics</span>
-                              <span>{geminiAnalysis.missingTopics?.length || 0}</span>
-                            </div>
-                            <div className="h-3 bg-purple-100 rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-gradient-to-r from-orange-400 to-red-400 rounded-full transition-all duration-1000"
-                                style={{ width: '25%' }}
+                                style={{ 
+                                  width: geminiAnalysis.topicCoverage && geminiAnalysis.missingTopics
+                                    ? `${Math.round(
+                                        (geminiAnalysis.topicCoverage.length /
+                                          (geminiAnalysis.topicCoverage.length + geminiAnalysis.missingTopics.length)) *
+                                        100
+                                      )}%`
+                                    : '0%'
+                                }}
                               ></div>
                             </div>
                           </div>
@@ -609,14 +613,9 @@ return annotatedContent;
                       </div>
                       <div className="bg-purple-50/50 p-6 rounded-xl border border-purple-200">
                         <h3 className="text-lg font-semibold text-purple-800 mb-4">Quality Assessment</h3>
-                        <div className="flex items-center space-x-4">
-                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-400 to-indigo-400 flex items-center justify-center shadow-lg">
-                            <span className="text-3xl font-bold text-white">B+</span>
-                          </div>
-                          <p className="text-purple-800 flex-1">
-                            {geminiAnalysis.qualityAssessment}
-                          </p>
-                        </div>
+                        <p className="text-purple-800">
+                          {geminiAnalysis.qualityAssessment}
+                        </p>
                       </div>
                     </div>
                   )}
