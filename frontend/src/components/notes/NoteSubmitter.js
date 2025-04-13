@@ -13,13 +13,39 @@ function NoteSubmitter({ lobbyId, advancedSettings }) {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        setError('PDF file size must be less than 10MB');
+        setPdfFile(null);
+        e.target.value = ''; // Clear the file input
+      } else if (file.type !== 'application/pdf') {
+        setError('Please upload a PDF file');
+        setPdfFile(null);
+        e.target.value = ''; // Clear the file input
+      } else {
+        setError('');
+        setPdfFile(file);
+      }
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsLoading(true);
     setError('');
 
     // Allow submission if either text content or a PDF is provided
-    if (!username || !lobbyId || (!content && !pdfFile)) {
+    if (!username || !lobbyId) {
+      setError('Please log in and select a lobby.');
+      setIsLoading(false);
+      return;
+    }
+
+    if (!content && !pdfFile) {
       setError('Please provide note text or upload a PDF.');
       setIsLoading(false);
       return;
@@ -29,7 +55,11 @@ function NoteSubmitter({ lobbyId, advancedSettings }) {
     const formData = new FormData();
     formData.append("user_id", username);
     formData.append("class_id", lobbyId);
-    formData.append("content", content);
+    if (content) {
+      formData.append("content", content);
+    } else {
+      formData.append("content", ""); // Send empty string if no text content
+    }
     if (pdfFile) {
       formData.append("pdf_file", pdfFile);
     }
@@ -164,7 +194,7 @@ function NoteSubmitter({ lobbyId, advancedSettings }) {
             id="pdfFile"
             type="file"
             accept="application/pdf"
-            onChange={(e) => setPdfFile(e.target.files[0])}
+            onChange={handleFileChange}
             disabled={isLoading}
             className="w-full px-4 py-2 rounded-lg bg-gray-600/30 text-white/80 border border-white/30"
           />
@@ -185,7 +215,17 @@ function NoteSubmitter({ lobbyId, advancedSettings }) {
               : 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:scale-105 hover:shadow-lg hover:shadow-indigo-500/40'
           }`}
         >
-          {isLoading ? 'Submitting...' : '🚀 Submit & Analyze'}
+          {isLoading ? (
+            <div className="flex items-center justify-center">
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processing...
+            </div>
+          ) : (
+            '🚀 Submit & Analyze'
+          )}
         </button>
       </form>
     </div>
