@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, Body # Body might not be needed here
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form
 from pydantic import BaseModel # Import BaseModel
 from motor.motor_asyncio import AsyncIOMotorClient
 from typing import Optional
 from app.db import get_database_client
 from app.extract import extract_key_concepts
+import PyPDF2
+
 # Assuming extract_key_concepts is defined elsewhere or remove if not used in this file
 # from app.extract import extract_key_concepts
 
@@ -16,23 +18,44 @@ class NotePayload(BaseModel):
     class_id: str
 # --- End Pydantic model definition ---
 
-# Route that only submits a note
+import io
+import re
+
+router = APIRouter()
+
 @router.post("/submit-note")
 async def submit_note(
-    payload: NotePayload,
+    user_id: str = Form(...),
+    content: str = Form(...),
+    class_id: str = Form(...),
+    pdf_file: Optional[UploadFile] = File(None),
     db_client: AsyncIOMotorClient = Depends(get_database_client)
 ):
+    # If a PDF file is provided, parse its text and use that as content
+    if pdf_file:
+        pdf_bytes = await pdf_file.read()
+        reader = PyPDF2.PdfReader(io.BytesIO(pdf_bytes))
+        extracted_text = ""
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                extracted_text += page_text + "\n"
+        # Clean up the extracted text:
+        # This replaces multiple whitespace characters (including newlines) with a single space.
+        note_content = re.sub(r'\s+', ' ', extracted_text).strip()
+    else:
+        note_content = content
+
     async with get_database_client() as client:
         db = client.notes_db
         note_data = {
-            "user_id": payload.user_id,
-            "content": payload.content,
-            "class_id": payload.class_id
+            "user_id": user_id,
+            "content": note_content,
+            "class_id": class_id
         }
 
-        # Update existing note or insert if it doesn't exist
         result = await db.notes.update_one(
-            {"user_id": payload.user_id, "class_id": payload.class_id},
+            {"user_id": user_id, "class_id": class_id},
             {"$set": note_data},
             upsert=True
         )
@@ -42,6 +65,7 @@ async def submit_note(
             "modified_count": result.modified_count,
             "upserted_id": str(result.upserted_id) if result.upserted_id else None
         }
+
 
 # ... (rest of your routes remain the same) ...
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // <-- Import useNavigate hook
 import { useAuth } from '../../context/AuthContext';
 
 const AuthForm = () => {
@@ -8,6 +9,8 @@ const AuthForm = () => {
   const [fullName, setFullName] = useState('');
   const [error, setError] = useState('');
   const { login, signup, showLogin, toggleAuthMode } = useAuth();
+  
+  const navigate = useNavigate();  // <-- Initialize useNavigate
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,7 +18,7 @@ const AuthForm = () => {
 
     try {
       let success = false;
-
+      
       if (showLogin) {
         success = await login(username, password);
       } else {
@@ -28,7 +31,8 @@ const AuthForm = () => {
       }
 
       if (success) {
-        window.location.reload();
+        // Instead of reloading the page, navigate to the Hub component
+        navigate('/app');
       }
     } catch (error) {
       setError(error.message || 'An error occurred during authentication');
@@ -107,8 +111,8 @@ const AuthForm = () => {
               onClick={toggleAuthMode}
               className="text-indigo-600 hover:text-indigo-800 text-sm"
             >
-              {showLogin 
-                ? "Don't have an account? Sign up" 
+              {showLogin
+                ? "Don't have an account? Sign up"
                 : "Already have an account? Login"}
             </button>
           </div>
@@ -118,4 +122,4 @@ const AuthForm = () => {
   );
 };
 
-export default AuthForm; 
+export default AuthForm;
